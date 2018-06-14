@@ -138,7 +138,8 @@ include_directories(include)
 #   src/${PROJECT_NAME}/whyconclient.cpp
 # )
 
-add_library(plutodrone src/Communication.cpp src/Protocol.cpp)
+#add_library(plutodrone src/Communication.cpp src/Protocol.cpp)
+add_library(plutodrone src/Communication.cpp)
 target_link_libraries(plutodrone)
 
 

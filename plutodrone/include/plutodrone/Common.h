@@ -4,6 +4,6 @@
 #include "Communication.h"
 
 
-extern Communication com;
+//extern Communication com;
 
 #endif

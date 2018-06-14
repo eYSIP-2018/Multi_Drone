@@ -10,50 +10,53 @@
 #include <unistd.h>
 #include <errno.h>
 #include <plutodrone/Communication.h>
-#include <plutodrone/Protocol.h>
+//#include <plutodrone/Protocol.h>
+#include <stdlib.h>
+
+
+#include <unistd.h>
+//#include <plutodrone/Protocol.h>
+//#include <string>
+//#include <plutodrone/Communication.h>
+
+
+
+std::string MSP_HEADER="$M<";
+
 
 
 using namespace std;
 
 
-Protocol pro;
+//Protocol pro;
 
 
 
-int indx=0;
-unsigned int len = 0;
-uint8_t checksum=0;
-uint8_t command=0;
-uint8_t payload_size=0;
+
 
 int optval;
 socklen_t optlen = sizeof(optval);
 
-int socketSyckLock=0;
-int socketOpStarted=0;
-int checksumIndex=0;
-uint8_t recbuf[1024];
+/*uint8_t Communication::checksum=0;
+uint8_t Communication::recbuf[1024];
 
- int c_state = IDLE;
+ int Communication::c_state = IDLE;
      uint8_t c;
      bool err_rcvd = false;
      int offset = 0, dataSize = 0;
-    // uint8_t checksum = 0;
      uint8_t cmd;
-     //byte[] inBuf = new byte[256];
-     int i = 0;
+*/
 
 
 
 
 
-
-bool Communication::connectSock()
+bool Communication::connectSock(std::string ip)
 {
 
 
 
-
+  const char *ip_addr=ip.c_str();
   int res;
   struct sockaddr_in addr;
   long arg;
@@ -75,7 +78,7 @@ bool Communication::connectSock()
 
   addr.sin_family = AF_INET;
   addr.sin_port = htons(23);
-  addr.sin_addr.s_addr = inet_addr("192.168.4.1");
+  addr.sin_addr.s_addr = inet_addr(ip_addr);
 
   // Set non-blocking
   if( (arg = fcntl(sockID, F_GETFL, NULL)) < 0) {
@@ -240,9 +243,9 @@ int Communication::writeSock(const void *buf, int count)
 
 
 
-// while (socketSyckLock) {
+// while (Communication::socketSyckLock) {
 //   /* code */
-// //printf("value of synclock in write = %i\n",socketSyckLock );
+// //printf("value of synclock in write = %i\n",Communication::socketSyckLock );
 //   usleep(2);
 // }
 
@@ -250,11 +253,11 @@ int Communication::writeSock(const void *buf, int count)
 
   //usleep(2000);
  int k=write(sockID,buf,count);
- //socketOpStarted=1;
+ //Communication::socketOpStarted=1;
 
 //usleep(500);
  //readFrame();
-socketSyckLock=1;
+Communication::socketSyckLock=1;
 return k;
 
 }
@@ -273,7 +276,7 @@ int k=read(sockID,buf,count);
 if(k>0)
 {
 
-uint8_t val=recbuf[0];
+uint8_t val=Communication::recbuf[0];
   return val;
 
 }
@@ -297,14 +300,14 @@ return k;
 //
 //
 //                  len = 0;
-//                  checksum=0;
+//                  Communication::checksum=0;
 //                  command=0;
 //                  payload_size=0;
 //                  checksumIndex=5;
 //
-//                  while (!socketSyckLock) {
+//                  while (!Communication::socketSyckLock) {
 //                    /* code */
-//                 //   printf("value of synclock in read = %i\n",socketSyckLock );
+//                 //   printf("value of synclock in read = %i\n",Communication::socketSyckLock );
 //                    usleep(2);
 //                  }
 //
@@ -329,8 +332,8 @@ return k;
 //
 //                          payload_size=(buf[3] & 0xFF);
 //                          command=(buf[4] & 0xFF);
-//                          checksum^=(payload_size & 0xFF);
-//                          checksum^=(command & 0xFF);
+//                          Communication::checksum^=(payload_size & 0xFF);
+//                          Communication::checksum^=(command & 0xFF);
 //                          indx=0;
 //
 //  //
@@ -346,12 +349,12 @@ return k;
 //                            //   NSLog(@"####### value of =%i",inputBuffer[indx-1]);
 //
 //
-//                              checksum^=(buf[i] & 0xFF);
+//                              Communication::checksum^=(buf[i] & 0xFF);
 //                              checksumIndex++;
 //
 //                          }
 //
-//                        if((checksum & 0xFF)==(buf[checksumIndex]&0xFF))
+//                        if((Communication::checksum & 0xFF)==(buf[checksumIndex]&0xFF))
 //                         {
 //                            printf("####### valid packet\n");
 //
@@ -375,7 +378,7 @@ return k;
 //                  }
 //
 //
-//                 socketSyckLock=0;
+//                 Communication::socketSyckLock=0;
 //
 // }
 
@@ -389,53 +392,53 @@ return k;
 
 
 
-              c = readSock(recbuf,1);
+              Communication::c = readSock(Communication::recbuf,1);
             //  Log.v("READ", "Data: " + c);
 
 
 
           //  printf("read Value= %i\n",c );
-            //  c_state = IDLE;
+            //  Communication::c_state = IDLE;
             //  Log.e("MultiwiiProtocol", "Read  = null");
 
 
-          if (c_state == IDLE) {
-              c_state = (c == '$') ? HEADER_START : IDLE;
-          } else if (c_state == HEADER_START) {
-              c_state = (c == 'M') ? HEADER_M : IDLE;
-          } else if (c_state == HEADER_M) {
-              if (c == '>') {
-                  c_state = HEADER_ARROW;
-              } else if (c == '!') {
-                  c_state = HEADER_ERR;
+          if (Communication::c_state == IDLE) {
+              Communication::c_state = (Communication::c == '$') ? HEADER_START : IDLE;
+          } else if (Communication::c_state == HEADER_START) {
+              Communication::c_state = (Communication::c == 'M') ? HEADER_M : IDLE;
+          } else if (Communication::c_state == HEADER_M) {
+              if (Communication::c == '>') {
+                  Communication::c_state = HEADER_ARROW;
+              } else if (Communication::c == '!') {
+                  Communication::c_state = HEADER_ERR;
               } else {
-                  c_state = IDLE;
+                  Communication::c_state = IDLE;
               }
-          } else if (c_state == HEADER_ARROW || c_state == HEADER_ERR) {
+          } else if (Communication::c_state == HEADER_ARROW || Communication::c_state == HEADER_ERR) {
       /* is this an error message? */
-              err_rcvd = (c_state == HEADER_ERR); /*
+              Communication::err_rcvd = (Communication::c_state == HEADER_ERR); /*
                          * now we are expecting the
                          * payload size
                          */
-              dataSize = (c & 0xFF);
+              Communication::dataSize = (Communication::c & 0xFF);
       /* reset index variables */
             //  p = 0;
-              offset = 0;
-              checksum = 0;
-              checksum ^= (c & 0xFF);
+              Communication::offset = 0;
+              Communication::checksum = 0;
+              Communication::checksum ^= (Communication::c & 0xFF);
       /* the command is to follow */
-              c_state = HEADER_SIZE;
-          } else if (c_state == HEADER_SIZE) {
-              cmd = (uint8_t) (c & 0xFF);
+              Communication::c_state = HEADER_SIZE;
+          } else if (Communication::c_state == HEADER_SIZE) {
+              Communication::cmd = (uint8_t) (Communication::c & 0xFF);
 //printf("cmd Value= %i\n",cmd );
 
-              checksum ^= (c & 0xFF);
-              c_state = HEADER_CMD;
-          }  else if (c_state == HEADER_CMD && offset < dataSize) {
-              checksum ^= (c & 0xFF);
-              inputBuffer[offset++] = (uint8_t) (c & 0xFF);
+              Communication::checksum ^= (Communication::c & 0xFF);
+              Communication::c_state = HEADER_CMD;
+          }  else if (Communication::c_state == HEADER_CMD && Communication::offset < Communication::dataSize) {
+              Communication::checksum ^= (Communication::c & 0xFF);
+              Communication::inputBuffer[Communication::offset++] = (uint8_t) (Communication::c & 0xFF);
 
-              if(cmd==108)
+              if(Communication::cmd==108)
               {
 
 
@@ -443,10 +446,10 @@ return k;
 
 
               }
-          } else if (c_state == HEADER_CMD && offset >= dataSize) {
-      /* compare calculated and transferred checksum */
-              if ((checksum & 0xFF) == (c & 0xFF)) {
-                  if (err_rcvd) {
+          } else if (Communication::c_state == HEADER_CMD && Communication::offset >= Communication::dataSize) {
+      /* compare calculated and transferred Communication::checksum */
+              if ((Communication::checksum & 0xFF) == (Communication::c & 0xFF)) {
+                  if (Communication::err_rcvd) {
                     //  Log.e("Multiwii protocol",
                       //        "Copter did not understand request type " + c);
                   } else {
@@ -454,16 +457,16 @@ return k;
                       //SONG BO HERE WE RECEIVED ENOUGH DATA-----------------------
                     //  evaluateCommand(cmd, (int) dataSize);
 
-                          bufferIndex=0;
+                          Communication::bufferIndex=0;
   //                          printf("cmd Value= %i\n",cmd );
-                         pro.evaluateCommand(cmd);
+                         evaluateCommand(Communication::cmd);
 
                       //SONG BO ---------------------------------------
                     //  DataFlow = DATA_FLOW_TIME_OUT;
                   }
               } else {
-                  // Log.e("Multiwii protocol", "invalid checksum for command "
-                  //         + ((int) (cmd & 0xFF)) + ": " + (checksum & 0xFF)
+                  // Log.e("Multiwii protocol", "invalid Communication::checksum for command "
+                  //         + ((int) (cmd & 0xFF)) + ": " + (Communication::checksum & 0xFF)
                   //         + " expected, got " + (int) (c & 0xFF));
                   // Log.e("Multiwii protocol", "<" + (cmd & 0xFF) + " "
                   //         + (dataSize & 0xFF) + "> {");
@@ -476,7 +479,346 @@ return k;
                   //Log.e("Multiwii protocol", "} [" + c + "]");
                   //Log.e("Multiwii protocol", new String(inBuf, 0, dataSize));
               }
-              c_state = IDLE;
+              Communication::c_state = IDLE;
+}
+
+}
+
+
+
+
+
+
+
+//  Protocol.cpp content
+
+int Communication::read8()
+{
+
+ return Communication::inputBuffer[Communication::bufferIndex++] & 0xff;
+
+
+
+}
+
+
+int Communication::read16()
+{
+
+
+      int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff) ;
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
+
+      return add_1+add_2;
+
+
+
+
+}
+
+
+int Communication::read32()
+{
+
+      int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
+      int add_3=((Communication::inputBuffer[Communication::bufferIndex++]) << 16);
+      int add_4=((Communication::inputBuffer[Communication::bufferIndex++]) << 24);
+  
+  return add_1+add_2+add_3+add_4;
+ /* return (Communication::inputBuffer[Communication::bufferIndex++] & 0xff) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8)+ ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);*/
+
+
+}
+
+
+void Communication::evaluateCommand(int command)
+{
+
+
+
+
+
+
+      switch (command) {
+
+
+         case MSP_FC_VERSION:
+
+              FC_versionMajor=read8();
+              FC_versionMinor=read8();
+              FC_versionPatchLevel=read8();
+
+      //          printf("FC_versionMajor= %i\n",FC_versionMajor);
+        //          printf("FC_versionMinor= %i\n",FC_versionMinor);
+          //          printf("FC_versionPatchLevel= %i\n",FC_versionPatchLevel);
+
+              break;
+
+          case MSP_RAW_IMU:
+
+
+              Communication::accX=read16();
+              Communication::accY=read16();
+              Communication::accZ=read16();
+
+
+//              printf("accX %f\n",accX);
+  //          printf("accY %f\n",accY);
+    //        printf("accZ %f\n",accZ);
+
+
+
+              Communication::gyroX=read16()/8;
+              Communication::gyroY=read16()/8;
+              Communication::gyroZ=read16()/8;
+
+
+
+
+              Communication::magX=read16()/3;
+              Communication::magY=read16()/3;
+              Communication::magZ=read16()/3;
+
+
+
+
+              break;
+
+
+          case MSP_ATTITUDE:
+
+             // for(int i=0; i<6;i++)
+                //  NSLog(@"value of %i",inputBuffer[i]);
+
+
+
+              Communication::roll=(read16()/10);
+              Communication::pitch=(read16()/10);
+              Communication::yaw=read16();
+
+              // printf("Roll %i\n",roll);
+               //printf("Pitch %i\n",pitch);
+               //printf("Yaw %i\n",yaw);
+
+              break;
+
+
+         case MSP_ALTITUDE:
+
+              Communication::alt=(read32()/10)-0;
+
+            //  printf("Altitude = %i\n",alt);
+              break;
+
+         case MSP_ANALOG:
+
+
+              Communication::battery=(read8()/10.0);
+
+          //   printf("Battery Volt %f\n",battery);
+        //     printf("meter sum %i\n",read16());
+              Communication::rssi=read16();
+      //        printf("Rssi %i\n",rssi);
+            //  NSLog(@"amperage %i",[MultiWi230 read16]);
+  //  printf("Dummy value %i\n",read16());
+    //    printf("Dummy value %i\n",read16());
+
+              break;
+
+
+
+          case MSP_ACC_TRIM:
+
+              Communication::trim_pitch=read16();
+
+
+          //printf("TrimPitch %i\n",trim_pitch);
+
+              Communication::trim_roll=read16();
+
+
+          //printf("TrimRoll %i\n",trim_roll);
+
+
+              break;
+
+
+              case MSP_RC:
+                             Communication::rcRoll = read16();
+
+                            //  printf("rcRoll %i\n",rcRoll);
+
+                             Communication::rcPitch = read16();
+
+                              //printf("rcPitch %i\n",rcPitch);
+                             Communication::rcYaw = read16();
+
+                             //printf("rcYaw %i\n",rcYaw);
+                             Communication::rcThrottle = read16();
+
+                             //printf("rcThrottle %i\n",rcThrottle);
+                             Communication::rcAUX1 = read16();
+
+                             //printf("rcAUX1 %i\n",rcAUX1);
+                             Communication::rcAUX2 = read16();
+
+                             //printf("rcAUX2 %i\n",rcAUX2);
+                             Communication::rcAUX3 = read16();
+
+                             //printf("rcAUX3 %i\n",rcAUX3);
+                             Communication::rcAUX4 = read16();
+
+                             //printf("rcAUX4 %i\n",rcAUX4);
+
+
+             break;
+
+          default:
+              break;
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+}
+
+void Communication::sendRequestMSP(std::vector<int8_t> data)
+{
+
+
+
+
+writeSock(&data[0],data.size());
+
+
+
+}
+
+
+std::vector<int8_t>  Communication::createPacketMSP(int msp, std::vector<int8_t>payload)
+{
+
+
+
+
+  if (msp < 0) {
+            // return NULL;
+         }
+        std::vector<int8_t> bf;
+
+
+     for(std::string::iterator it = MSP_HEADER.begin(); it != MSP_HEADER.end(); ++it) {
+
+       bf.push_back((int8_t) (*it & 0xFF));
+
+       }
+
+         int8_t checksum = 0;
+         int8_t pl_size = (int8_t) ((!payload.empty() ? (int) (payload.size()) : 0) & 0xFF);
+         bf.push_back(pl_size);
+         checksum ^= (pl_size & 0xFF);
+
+         bf.push_back((int8_t) (msp & 0xFF));
+         checksum ^= (msp & 0xFF);
+
+//printf("MSP No %d\n",msp );
+
+//printf("Payload size %d\n",payload.size() );
+
+         if (!payload.empty()) {
+//printf("Adding payload %d\n");
+
+             for (std::vector<int8_t>::iterator it = payload.begin() ; it != payload.end(); ++it) {
+
+                int8_t k=*it;
+  //             printf("payload  value %i\n",k);
+                 bf.push_back((int8_t) (k & 0xFF));
+                 checksum ^= (k & 0xFF);
+             }
+         }
+         bf.push_back(checksum);
+         
+         //for (std::vector<int8_t>::const_iterator i = bf.begin(); i != bf.end(); ++i)
+         //std::cout << *i << ' ';
+         
+         
+         return (bf);
+
+
+
+}
+
+
+void Communication::sendRequestMSP_SET_RAW_RC(int channels[])
+{
+
+std::vector<int8_t>rc_signals(16);
+
+int index = 0;
+       for (int i = 0; i < 8; i++) {
+           //Log.d("drona", "Data: " + (channels8[i]));
+           rc_signals[index++] = (int8_t) (channels[i] & 0xFF);
+           rc_signals[index++] = (int8_t) ((channels[i] >> 8) & 0xFF);
+
+        //   printf("rcvalue = %i\n" ,channels[i]);
+          // rc_signals.push_back((uint8_t) (channels[i] & 0xFF));
+           //rc_signals.push_back( (uint8_t) ((channels[i] >> 8) & 0xFF));
+       }
+
+
+
+// printf("size of rc_array %d\n",rc_signals.size() );
+ sendRequestMSP(createPacketMSP(MSP_SET_RAW_RC, rc_signals));
+
+
+}
+
+
+void Communication::sendRequestMSP_SET_POS(int posArray[])
+{
+
+std::vector<int8_t>posData(8);
+
+int index = 0;
+       for (int i = 0; i < 4; i++) {
+           //Log.d("drona", "Data: " + (channels8[i]));
+           posData[index++] = (int8_t) (posArray[i] & 0xFF);
+           posData[index++] = (int8_t) ((posArray[i] >> 8) & 0xFF);
+
+      //  printf("posvalue = %i\n" ,posArray[i]);
+          // rc_signals.push_back((uint8_t) (channels[i] & 0xFF));
+           //rc_signals.push_back( (uint8_t) ((channels[i] >> 8) & 0xFF));
+       }
+
+
+
+// printf("size of rc_array %d\n",rc_signals.size() );
+ sendRequestMSP(createPacketMSP(MSP_SET_POS, posData));
+
+
+}
+
+
+
+
+
+void Communication::sendRequestMSP_GET_DEBUG(std::vector<int> requests)
+{
+
+for (size_t i = 0; i < requests.size(); i++) {
+
+ {sendRequestMSP(createPacketMSP(requests[i], std::vector<int8_t>()));
+ }
 }
 
 }

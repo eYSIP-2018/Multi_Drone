@@ -10,7 +10,6 @@ class send_data():
 		rospy.init_node('drone_server')
 		self.command_pub = rospy.Publisher('/drone_command', PlutoMsg, queue_size=1)
 		rospy.Subscriber('/input_key', Int16, self.indentify_key )
-
 		self.key_value =0
 		self.cmd = PlutoMsg()
 		self.cmd.rcRoll =1500
@@ -45,10 +44,10 @@ class send_data():
 		self.cmd.rcPitch =1400
 		self.command_pub.publish(self.cmd)
 	def left(self):
-		self.cmd.rcRoll =1600
+		self.cmd.rcRoll =1400
 		self.command_pub.publish(self.cmd)	
 	def right(self):
-		self.cmd.rcRoll =1400
+		self.cmd.rcRoll =1600
 		self.command_pub.publish(self.cmd)
 	def reset(self):
 		self.cmd.rcRoll =1500
@@ -57,10 +56,10 @@ class send_data():
 		self.cmd.rcYaw = 1500
 		self.command_pub.publish(self.cmd)
 	def increase_height(self):
-		self.cmd.rcThrottle = 1600
+		self.cmd.rcThrottle= 1750
 		self.command_pub.publish(self.cmd)
 	def decrease_height(self):
-		self.cmd.rcThrottle =1400
+		self.cmd.rcThrottle =1500
 		self.command_pub.publish(self.cmd)
 
 	def control_drone(self):
@@ -69,6 +68,7 @@ class send_data():
 				self.disarm()
 			if self.key_value == 70:
 				self.arm()
+				print("arm")
 			if self.key_value == 10:
 				self.forward()
 			if self.key_value == 20:
@@ -79,6 +79,7 @@ class send_data():
 				self.right()
 			if self.key_value == 80:
 				self.reset()
+				break
 			if self.key_value == 50:
 				self.increase_height()
 			if self.key_value == 60:
@@ -90,8 +91,11 @@ class send_data():
 
 if __name__ == '__main__':
 	while not rospy.is_shutdown():
+	        print("aaaaa")
 		test = send_data()
+		print("b")
 		test.control_drone()
+		print("c")
 		rospy.spin()
 		sys.exit(1)
 
