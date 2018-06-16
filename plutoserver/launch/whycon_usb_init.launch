@@ -1,7 +1,7 @@
 <launch>
    <arg name="name" default="whycon"/>
    <arg name="targets" default="1"/>
-   <arg name="outer_diameter" default=".43"/>
+   <arg name="outer_diameter" default=".52"/>
    <arg name="inner_diameter" default=".19"/>
 
    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >

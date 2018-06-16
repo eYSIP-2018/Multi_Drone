@@ -18,7 +18,7 @@
 
 
 #define PORT 23
-#define NODES 2
+#define NODES 1
 using namespace std;
 
 
@@ -34,7 +34,8 @@ vector <string> all_ips;
 ros::ServiceClient serviceClient[NODES];
 plutodrone::PlutoPilot service[NODES];
 
-int userRC[8]={0,0,0,0,0,0,0,0};
+//int userRC[8]={0,0,0,0,0,0,0,0};
+int userRC[NODES][8];
 
 
 struct ip_struct
@@ -65,7 +66,7 @@ void *writeFunction(void *arg)
 
   while(1)
   {
-    com[*index].sendRequestMSP_SET_RAW_RC(userRC);
+    com[*index].sendRequestMSP_SET_RAW_RC(userRC[*index]);
     com[*index].sendRequestMSP_GET_DEBUG(requests);
     //com.sendRequestMSP_SET_RAW_RC(userRC);
     //com.sendRequestMSP_GET_DEBUG(requests);
@@ -100,14 +101,14 @@ void *serviceFunction(void *arg)
       {
       
       //cout<<"service"<<*index;
-       userRC[0]=service[*index].response.rcRoll;
-       userRC[1]=service[*index].response.rcPitch;
-       userRC[2]=service[*index].response.rcThrottle;
-       userRC[3]=service[*index].response.rcYaw;
-       userRC[4]=service[*index].response.rcAUX1;
-       userRC[5]=service[*index].response.rcAUX2;
-       userRC[6]=service[*index].response.rcAUX3;
-       userRC[7]=service[*index].response.rcAUX4;
+       userRC[*index][0]=service[*index].response.rcRoll;
+       userRC[*index][1]=service[*index].response.rcPitch;
+       userRC[*index][2]=service[*index].response.rcThrottle;
+       userRC[*index][3]=service[*index].response.rcYaw;
+       userRC[*index][4]=service[*index].response.rcAUX1;
+       userRC[*index][5]=service[*index].response.rcAUX2;
+       userRC[*index][6]=service[*index].response.rcAUX3;
+       userRC[*index][7]=service[*index].response.rcAUX4;
        
        //if(*index==1)
        //cout<<"alt:"<<com[*index].accX;
@@ -144,14 +145,15 @@ void *serviceFunction(void *arg)
 }
 void Callback(const plutodrone::PlutoMsg::ConstPtr& msg)
 {
- userRC[0] = msg->rcRoll;
- userRC[1] = msg->rcPitch;
- userRC[2] = msg->rcThrottle;
- userRC[3] = msg->rcYaw;
- userRC[4] = msg->rcAUX1;
- userRC[5] = msg->rcAUX2;
- userRC[6] = msg->rcAUX3;
- userRC[7] = msg->rcAUX4;
+ int i=msg->pluto;
+ userRC[i][0] = msg->rcRoll;
+ userRC[i][1] = msg->rcPitch;
+ userRC[i][2] = msg->rcThrottle;
+ userRC[i][3] = msg->rcYaw;
+ userRC[i][4] = msg->rcAUX1;
+ userRC[i][5] = msg->rcAUX2;
+ userRC[i][6] = msg->rcAUX3;
+ userRC[i][7] = msg->rcAUX4;
 }
 
 
@@ -161,12 +163,16 @@ int main(int argc, char **argv)
     struct ip_struct ipStructVar;
    
     for(int j=0;j<NODES;j++)
-    isSocketCreate[j]=false;
+    {
+     for(int k=0;k<8;k++)
+     userRC[j][k]=0;
+     isSocketCreate[j]=false;
+    }
     
     
-   all_ips.push_back("192.168.43.208");
-   //all_ips.push_back("192.168.4.1");
-    all_ips.push_back("192.168.43.243");
+   //all_ips.push_back("192.168.43.208");
+   all_ips.push_back("192.168.4.1");
+    //all_ips.push_back("192.168.43.243");
     //all_ips.push_back("192.168.43.1");
   
     char topic_name[] = "drone_command_ ";

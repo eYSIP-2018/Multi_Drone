@@ -23,7 +23,7 @@ from whycon.srv import *
 
 
 # Number of nodes (drones to control)
-NODES=2
+NODES=1
 
 # Vraibles to store the whycon positions of drones
 pos_x=[0.0]*NODES
@@ -42,17 +42,18 @@ alt=[0.0]*NODES
 yaw=[0.0]*NODES
 
 # fixed values 
-fyaw=[0.0]*NODES
+fix_yaw=[0.0]*NODES
 fix_x=[0.0]*NODES
 fix_y=[0.0]*NODES
-fix_alt=[0.0]*NODES
+fix_alt=[70.0]*NODES
+is_first_yaw=[True]*NODES
 
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':0.0,'kd':0.0,'ki':0.0}]*NODES
-pid_roll=[{'kp':0.0,'kd':0.0,'ki':0.0}]*NODES
-pid_yaw=[{'kp':0.0,'kd':0.0,'ki':0.0}]*NODES
-pid_throttle=[{'kp':0.0,'kd':0.0,'ki':0.0}]*NODES
+pid_pitch=[{'kp':8.0,'kd':240.0,'ki':15.0}]*NODES
+pid_roll=[{'kp':11.0,'kd':240.0,'ki':15.0}]*NODES
+pid_yaw=[{'kp':15.0,'kd':3.0,'ki':0.0}]*NODES
+pid_throttle=[{'kp':9.0,'kd':80.0,'ki':2.0}]*NODES
 
 
 
@@ -87,7 +88,7 @@ class dataThread(threading.Thread):
    def run(self):
      rospy.Subscriber('/whycon/poses',PoseArray,image_data)
      rospy.Subscriber('/Sensor_data_0',floatar,readData,0)
-     rospy.Subscriber('/Sensor_data_1',floatar,readData,1)
+     #rospy.Subscriber('/Sensor_data_1',floatar,readData,1)
      rospy.spin() 
      
      
@@ -121,9 +122,9 @@ class controlThread(threading.Thread):
    *
    * Example Call: arm()
    '''
-
    def arm(self):
     cmd = PlutoMsg()
+    cmd.pluto=self.node
     cmd.rcRoll =1500
     cmd.rcPitch = 1500
     cmd.rcYaw =1500
@@ -135,10 +136,7 @@ class controlThread(threading.Thread):
     self.drone_control.publish(cmd) 
     rospy.sleep(0.18)
    
-   
-   
-   
-   
+    
    '''
    * Function Name: disarm
    * Input:   None
@@ -146,10 +144,10 @@ class controlThread(threading.Thread):
    * Logic:   publish message to drone_command topic for disarming the drone with required delay
    *
    * Example Call: disarm()
-   '''
-    
+   '''  
    def disarm(self):
     cmd = PlutoMsg()
+    cmd.pluto=self.node
     cmd.rcRoll =1500
     cmd.rcPitch = 1500
     cmd.rcYaw =1500
@@ -175,13 +173,8 @@ class controlThread(threading.Thread):
    def run(self):
     global pos_x,pos_y,pos_z,pitch,roll,yaw,alt,fix_yaw,fix_x,fix_y,fix_alt
     
-    maxpropx=10.0
-    maxpropy=10.0
-    
-    # storing position from global list
-    x=pos_x[self.node]
-    y=pos_x[self.node]
-    z=pos_x[self.node]
+    maxpropx=70.0
+    maxpropy=70.0
     
     # storing sensor values from global list
     pitchs=pitch[self.node]
@@ -202,7 +195,7 @@ class controlThread(threading.Thread):
     
     prex=0.0
     prey=0.0
-    errorprez=0.0
+    prez=0.0
     errorpreyaw=0.0
     integral_yaw=0.0
     integral_x=0.0
@@ -212,6 +205,7 @@ class controlThread(threading.Thread):
     
     # PlutoMsg obj to publish data to pluto
     cmd = PlutoMsg()
+    cmd.pluto=self.node
     cmd.rcRoll =1500
     cmd.rcPitch = 1500
     cmd.rcYaw =1500
@@ -221,16 +215,24 @@ class controlThread(threading.Thread):
     cmd.rcAUX3 =1500
     cmd.rcAUX4 =1500
     
+    diffz_filter=[0.0,0.0,0.0,0]
+    z_filter_i=0
+    
     while(1):
        # delay according to drone processing rate
-       rospy.sleep(0.029)
+       rospy.sleep(0.059)
            
        ######## PID to control the YAW of the drone  #################
-       erroryaw=fix_alt[self.node]-yaws
+       erroryaw=fix_yaw[self.node]-yaw[self.node]
        '''if abs(erroryaw)>200:
          erroryaw=fyaw-(yaws+((abs(erroryaw)/erroryaw)*360))'''
        integral_yaw+=erroryaw/200 
-       yaw=self.yaw['kp']*erroryaw+self.yaw['ki']*integral_yaw+self.yaw['kd']*(erroryaw-errorpreyaw)
+       yaw_cmd=self.yaw['kp']*erroryaw+self.yaw['ki']*integral_yaw+self.yaw['kd']*(erroryaw-errorpreyaw)
+       if yaw_cmd>200:
+        yaw_cmd=200
+       elif yaw_cmd<-200:
+        yaw_cmd=-200
+         
        #cmd.rcYaw=1500+yaw
        #print("yawww:",yaw);
        #cmd.rcYaw=1500
@@ -238,10 +240,21 @@ class controlThread(threading.Thread):
        ##########**************************############
        #         PID for pitch and roll of drone    ###
        ##########*************************#############
-       errorx=fix_x[self.node]-x
-       errory=fix_y[self.node]-y
-       diffx=prex-x
-       diffy=prey-y
+       errorx=fix_x[self.node]-pos_x[self.node]
+       errory=fix_y[self.node]-pos_y[self.node]
+       diffx=prex-pos_x[self.node]
+       diffy=prey-pos_y[self.node]
+       
+       # limit for difference if marker is not detected for a time
+       if diffx>0.2:
+        diffx=0.2
+       elif diffx<-0.2:
+        diffx=-0.2
+       if diffy>0.2:
+        diffy=0.2
+       elif diffy<-0.2:
+        diffy=-0.2
+           
        #diffx=errorx-errorprex
        #diffy=errory-errorprey
        if abs(errorx)<2.2:
@@ -277,32 +290,66 @@ class controlThread(threading.Thread):
          if rerrory<1.0:
            proy*=rerrory 
        #print("prox:",prox,"proy:",proy)          
-       speedx=prox+self.pitch['ki']*integral_x+self.pitch['kd']*(diffx)
-       speedy=proy+self.roll['ki']*integral_y+self.roll['kd']*(diffy)
-
+       pid_x=prox+self.pitch['ki']*integral_x+self.pitch['kd']*(diffx)
+       pid_y=proy+self.roll['ki']*integral_y+self.roll['kd']*(diffy)
+       
+       LIMIT=100
+       if pid_x>LIMIT:
+        pid_x=LIMIT
+       elif pid_x<-LIMIT:
+        pid_x=-LIMIT
+        
+       if pid_y>LIMIT:
+        pid_y=LIMIT
+       elif pid_y<-LIMIT:
+        pid_y=-LIMIT  
+       
+       speedx=1500-pid_x
+       speedy=1500-pid_y
+       
 
        ###*******************************************************************************************###
        ###                             PID for Height of Drone                                       ###
        ###*******************************************************************************************### 
        
        
-       ### calculating the error    
-       errorz=alts-fix_alt[self.node]
-       diffz=errorz-errorprez   # alts-altspre
-       #print("diffz:",diffz)
+       if alt[self.node]>600:
+         alt[self.node]=prez
        
+       ### calculating the error    
+       errorz=alt[self.node]-fix_alt[self.node]
+       #diffz=errorz-errorprez   # alt[self.node]-prez
+       diffz=alt[self.node]-prez
+       # low pass filter to z
+       diffz=diffz*0.55+diffz_filter[0]*0.15+diffz_filter[1]*0.15+diffz_filter[2]*0.15
+       diffz_filter[z_filter_i]=diffz
+       z_filter_i=(z_filter_i+1)%3
+       
+       print("diffz:",diffz)
+       kdz=self.throttle['kd']
+       kpz=self.throttle['kp']
        ### kdz is doubled when height is decreasing from fixes point  ###
-       '''if alts>falt and diffz<0 and hoverflag==0:
-        #kdz=40
-        kdz=15
-       if hoverflag==1:
-        kpz=25 '''
-       '''if alts>falt: 
-        kpz=15''' 
-       integral_z+=errorz/100
+       if alt[self.node]<fix_alt[self.node] and diffz<0:
+        kdz*=2
+       elif alt[self.node]>fix_alt[self.node] and diffz>0: 
+        kdz/=3
+       elif alt[self.node]>fix_alt[self.node]:
+        kpz/=2 
+        
+       integral_z+=errorz/200
+       if integral_z<-35:
+        integral_z=-35
        #if alts<falt and errorz>3 and diffz<2:
        # kpz*=1
-       speedz=self.throttle['kp']*errorz+self.throttle['ki']*integral_z+self.throttle['kd']*diffz
+       
+       # claculating proprotaional component
+       propz=kpz*errorz
+       if propz<-300:
+        propz=-300
+       elif propz>200:
+        propz=200
+       print("propz:",propz)  
+       speedz=propz+self.throttle['ki']*integral_z+kdz*diffz
        #print("speedz:",speedz)
        ### To maintain the throttle upper value as 2000
        throttle=1500-speedz
@@ -311,13 +358,23 @@ class controlThread(threading.Thread):
        elif throttle<1000:
         throttle=1000 
        
+       
+       
+       
        # assigning calculated values to PlutoMsg object
-       cmd.rcYaw=1500+yaw
-       cmd.rcRoll=1500-speedy
-       cmd.rcPitch=1500-speedx
+       cmd.rcYaw=1500
+       cmd.rcRoll=speedy
+       cmd.rcPitch=speedx
        cmd.rcThrottle=throttle
        
        # debuging point
+       print("errorx:"+str(errorx))
+       print("errory:"+str(errory))
+       print("errorz:"+str(errorz))
+       print("error_yaw:"+str(erroryaw))
+       print("diffx:",str(diffx))
+       print("diffy:",str(diffy))
+       
        print("Throttle:"+str(throttle))
        print("Yaw:"+str(cmd.rcYaw))
        print("Roll:"+str(cmd.rcRoll))
@@ -326,12 +383,21 @@ class controlThread(threading.Thread):
        
        # assigning values of current error to previous value variables
        errorpreyaw=erroryaw
-       prex=x
-       prey=y
-       errorprez=errorz
+       prex=pos_x[self.node]
+       prey=pos_y[self.node]
+       prez=alt[self.node]
        
-       # publishing to drone topic
-       self.drone_control.publish(cmd)
+       
+       while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+        line = sys.stdin.readline()
+        if line=="e\n":         #to stop the node with disarming the drone if e is pressed followed by enter
+          self.disarm()
+          self.disarm()
+          self.disarm()
+          sys.exit() 
+       else:
+        # publishing to drone topic
+        self.drone_control.publish(cmd)
 
 
 
@@ -540,12 +606,18 @@ def image_data(data):
 '''
 
 def readData(data,x):
-    global pitch,roll,alt
+    global pitch,roll,alt,yaw,fix_yaw,is_first_yaw
     pitch[x]=data.pitch
     roll[x]=data.roll
     yaw[x]=data.yaw
-    alts=data.alt
-
+    alt[x]=data.alt
+    if is_first_yaw[x]:
+      fix_yaw[x]=data.yaw-4
+      is_first_yaw[x]=False
+      
+    #debuging point 
+    #print(yaw[x])
+    #print(fix_yaw[x])
 
 
 
@@ -610,7 +682,7 @@ if __name__ == '__main__':
     #print("working")
     #### Making instance of thread and starting thread to control the drones  #####
     drone0=controlThread(0,pid_pitch[0],pid_roll[0],pid_yaw[0],pid_throttle[0],'/drone_command_0')
-    drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
+    #drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
     
     drone0.start()
     #drone1.start()
