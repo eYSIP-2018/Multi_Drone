@@ -43,17 +43,17 @@ yaw=[0.0]*NODES
 
 # fixed values 
 fix_yaw=[0.0]*NODES
-fix_x=[0.0]*NODES
-fix_y=[0.0]*NODES
+fix_x=[0.0]
+fix_y=[0.0]
 fix_alt=[70.0]*NODES
 is_first_yaw=[True]*NODES
 
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':8.0,'kd':240.0,'ki':15.0}]*NODES
-pid_roll=[{'kp':11.0,'kd':240.0,'ki':15.0}]*NODES
+pid_pitch=[{'kp':8.0,'kd':240.0,'ki':15.0}]*NODES   # 8,240,15
+pid_roll=[{'kp':14.0,'kd':300.0,'ki':10.0}]*NODES
 pid_yaw=[{'kp':15.0,'kd':3.0,'ki':0.0}]*NODES
-pid_throttle=[{'kp':9.0,'kd':80.0,'ki':2.0}]*NODES
+pid_throttle=[{'kp':11.0,'kd':80.0,'ki':1.0}]*NODES
 
 
 
@@ -183,6 +183,7 @@ class controlThread(threading.Thread):
     alts=alt[self.node]
     
     ## block to arm the drone
+    print("working0")
     self.disarm()
     self.disarm()
     self.disarm()
@@ -329,11 +330,11 @@ class controlThread(threading.Thread):
        kdz=self.throttle['kd']
        kpz=self.throttle['kp']
        ### kdz is doubled when height is decreasing from fixes point  ###
-       if alt[self.node]<fix_alt[self.node] and diffz<0:
+       if alt[self.node]<fix_alt[self.node] and diffz<0:    # increase the kd if drone height is decreasing from set point
         kdz*=2
-       elif alt[self.node]>fix_alt[self.node] and diffz>0: 
+       elif alt[self.node]>fix_alt[self.node] and diffz>0: # reduce the kd if drone is crossing the set point height 
         kdz/=3
-       elif alt[self.node]>fix_alt[self.node]:
+       elif alt[self.node]>fix_alt[self.node]:            # if drone is above the set point then reduce the kp to decrease the throttle gradualy
         kpz/=2 
         
        integral_z+=errorz/200
@@ -363,6 +364,7 @@ class controlThread(threading.Thread):
        
        # assigning calculated values to PlutoMsg object
        cmd.rcYaw=1500
+       cmd.rcYaw=1500-yaw_cmd
        cmd.rcRoll=speedy
        cmd.rcPitch=speedx
        cmd.rcThrottle=throttle

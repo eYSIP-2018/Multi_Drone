@@ -507,7 +507,7 @@ int Communication::read16()
 
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff) ;
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
 
       return add_1+add_2;
 
@@ -521,9 +521,9 @@ int Communication::read32()
 {
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff);
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
-      int add_3=((Communication::inputBuffer[Communication::bufferIndex++]) << 16);
-      int add_4=((Communication::inputBuffer[Communication::bufferIndex++]) << 24);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
+      int add_3=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16);
+      int add_4=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);
   
   return add_1+add_2+add_3+add_4;
  /* return (Communication::inputBuffer[Communication::bufferIndex++] & 0xff) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8)+ ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);*/
@@ -606,7 +606,7 @@ void Communication::evaluateCommand(int command)
 
          case MSP_ALTITUDE:
 
-              Communication::alt=(read32()/10)-0;
+              Communication::alt=(read32()/10);
 
             //  printf("Altitude = %i\n",alt);
               break;
@@ -671,7 +671,7 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-
+                              cout<<"Yaw:"<<rcYaw;
              break;
 
           default:

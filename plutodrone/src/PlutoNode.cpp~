@@ -145,7 +145,7 @@ void *serviceFunction(void *arg)
 }
 void Callback(const plutodrone::PlutoMsg::ConstPtr& msg)
 {
- int i=msg->pluto
+ int i=msg->pluto;
  userRC[i][0] = msg->rcRoll;
  userRC[i][1] = msg->rcPitch;
  userRC[i][2] = msg->rcThrottle;
@@ -171,7 +171,7 @@ int main(int argc, char **argv)
     
     
    //all_ips.push_back("192.168.43.208");
-   all_ips.push_back("192.168.4.1");
+   //all_ips.push_back("192.168.4.1");
     //all_ips.push_back("192.168.43.243");
     //all_ips.push_back("192.168.43.1");
   

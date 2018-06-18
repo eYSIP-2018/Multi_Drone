@@ -170,8 +170,8 @@ int main(int argc, char **argv)
     }
     
     
-   //all_ips.push_back("192.168.43.208");
-   all_ips.push_back("192.168.4.1");
+   all_ips.push_back("192.168.43.208");
+   //all_ips.push_back("192.168.4.1");
     //all_ips.push_back("192.168.43.243");
     //all_ips.push_back("192.168.43.1");
   

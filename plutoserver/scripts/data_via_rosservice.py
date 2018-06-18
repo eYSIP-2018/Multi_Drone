@@ -24,7 +24,7 @@ class request_data(threading.Thread):
 	def access_data(self, req):
 		 #print "accx = " + str(req.accX), "accy = " + str(req.accY), "accz = " + str(req.accZ)
 		 #print "gyrox = " + str(req.gyroX), "gyroy = " + str(req.gyroY), "gyroz = " + str(req.gyroZ)
-		 #print "magx = " + str(req.magX), "magy = " + str(req.magY), "magz = " + str(req.magZ)
+		 print "magx = " + str(req.magX), "magy = " + str(req.magY), "magz = " + str(req.magZ)
 		 print self.drone_topic + ":"
 		 print "roll = " + str(req.roll), "pitch = " + str(req.pitch), "yaw = " + str(req.yaw)
 		 print "altitude = " +str(req.alt)

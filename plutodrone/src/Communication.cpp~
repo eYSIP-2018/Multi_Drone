@@ -521,7 +521,7 @@ int Communication::read32()
 {
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff);
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
       int add_3=((Communication::inputBuffer[Communication::bufferIndex++]) << 16);
       int add_4=((Communication::inputBuffer[Communication::bufferIndex++]) << 24);
   
@@ -606,7 +606,7 @@ void Communication::evaluateCommand(int command)
 
          case MSP_ALTITUDE:
 
-              Communication::alt=(read32()/10)-0;
+              Communication::alt=(read32()/10);
 
             //  printf("Altitude = %i\n",alt);
               break;
@@ -671,7 +671,7 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-
+                              cout<<"Yaw:"<<rcYaw;
              break;
 
           default:
@@ -748,8 +748,8 @@ std::vector<int8_t>  Communication::createPacketMSP(int msp, std::vector<int8_t>
          }
          bf.push_back(checksum);
          
-         for (std::vector<int8_t>::const_iterator i = bf.begin(); i != bf.end(); ++i)
-         std::cout << *i << ' ';
+         //for (std::vector<int8_t>::const_iterator i = bf.begin(); i != bf.end(); ++i)
+         //std::cout << *i << ' ';
          
          
          return (bf);
