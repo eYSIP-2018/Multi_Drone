@@ -521,9 +521,9 @@ int Communication::read32()
 {
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff);
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
-      int add_3=((Communication::inputBuffer[Communication::bufferIndex++]) << 16);
-      int add_4=((Communication::inputBuffer[Communication::bufferIndex++]) << 24);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] ) << 8);
+      int add_3=((Communication::inputBuffer[Communication::bufferIndex++] ) << 16);
+      int add_4=((Communication::inputBuffer[Communication::bufferIndex++] ) << 24);
   
   return add_1+add_2+add_3+add_4;
  /* return (Communication::inputBuffer[Communication::bufferIndex++] & 0xff) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8)+ ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);*/
@@ -671,7 +671,9 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-                              cout<<"Yaw:"<<rcYaw;
+                              cout<<"\nYaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
+                              cout<<"\nThrottle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
+                              cout<<"\nAUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
              break;
 
           default:

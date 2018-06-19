@@ -1,6 +1,6 @@
 <launch>
    <arg name="name" default="whycon"/>
-   <arg name="targets" default="2"/>
+   <arg name="targets" default="1"/>
    <arg name="outer_diameter" default=".52"/>
    <arg name="inner_diameter" default=".19"/>
 

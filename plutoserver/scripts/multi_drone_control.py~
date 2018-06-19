@@ -23,7 +23,7 @@ from whycon.srv import *
 
 
 # Number of nodes (drones to control)
-NODES=1
+NODES=2
 
 # Vraibles to store the whycon positions of drones
 pos_x=[0.0]*NODES
@@ -31,7 +31,7 @@ pos_y=[0.0]*NODES
 pos_z=[0.0]*NODES
 
 # variables to store the previous values of drones 
-pos_px=[0.0]*NODES
+pos_px=[-4.0,4.0]
 pos_py=[0.0]*NODES
 pos_pz=[0.0]*NODES
 
@@ -43,17 +43,17 @@ yaw=[0.0]*NODES
 
 # fixed values 
 fix_yaw=[0.0]*NODES
-fix_x=[0.0]
-fix_y=[0.0]
+fix_x=[-4.0,4.0]
+fix_y=[0.0,0.0]
 fix_alt=[70.0]*NODES
 is_first_yaw=[True]*NODES
 
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':8.0,'kd':240.0,'ki':15.0}]*NODES   # 8,240,15
-pid_roll=[{'kp':14.0,'kd':300.0,'ki':10.0}]*NODES
-pid_yaw=[{'kp':15.0,'kd':3.0,'ki':0.0}]*NODES
-pid_throttle=[{'kp':11.0,'kd':80.0,'ki':1.0}]*NODES
+pid_pitch=[{'kp':25.0,'kd':700.0,'ki':10.0}]*NODES   # 8,240,15
+pid_roll=[{'kp':25.0,'kd':700.0,'ki':10.0}]*NODES
+pid_yaw=[{'kp':50.0,'kd':3.0,'ki':0.0}]*NODES
+pid_throttle=[{'kp':11.0,'kd':80.0,'ki':1.5}]*NODES
 
 
 
@@ -183,7 +183,6 @@ class controlThread(threading.Thread):
     alts=alt[self.node]
     
     ## block to arm the drone
-    print("working0")
     self.disarm()
     self.disarm()
     self.disarm()
@@ -217,11 +216,15 @@ class controlThread(threading.Thread):
     cmd.rcAUX4 =1500
     
     diffz_filter=[0.0,0.0,0.0,0]
+    diffy_filter=[0.0,0.0,0.0,0]
+    diffx_filter=[0.0,0.0,0.0,0]
     z_filter_i=0
+    y_filter_i=0
+    x_filter_i=0
     
     while(1):
        # delay according to drone processing rate
-       rospy.sleep(0.059)
+       rospy.sleep(0.025)
            
        ######## PID to control the YAW of the drone  #################
        erroryaw=fix_yaw[self.node]-yaw[self.node]
@@ -229,10 +232,10 @@ class controlThread(threading.Thread):
          erroryaw=fyaw-(yaws+((abs(erroryaw)/erroryaw)*360))'''
        integral_yaw+=erroryaw/200 
        yaw_cmd=self.yaw['kp']*erroryaw+self.yaw['ki']*integral_yaw+self.yaw['kd']*(erroryaw-errorpreyaw)
-       if yaw_cmd>200:
-        yaw_cmd=200
-       elif yaw_cmd<-200:
-        yaw_cmd=-200
+       if yaw_cmd>500:
+        yaw_cmd=500
+       elif yaw_cmd<-500:
+        yaw_cmd=-500
          
        #cmd.rcYaw=1500+yaw
        #print("yawww:",yaw);
@@ -245,6 +248,19 @@ class controlThread(threading.Thread):
        errory=fix_y[self.node]-pos_y[self.node]
        diffx=prex-pos_x[self.node]
        diffy=prey-pos_y[self.node]
+       
+       # low pass filter to x
+       diffx=diffx*0.45+diffx_filter[0]*0.20+diffx_filter[1]*0.20+diffx_filter[2]*0.20
+       diffx_filter[x_filter_i]=diffx
+       x_filter_i=(x_filter_i+1)%3
+       
+       
+       # low pass filter to y
+       diffy=diffy*0.45+diffy_filter[0]*0.20+diffy_filter[1]*0.20+diffy_filter[2]*0.20
+       diffy_filter[y_filter_i]=diffy
+       y_filter_i=(y_filter_i+1)%3
+       
+       
        
        # limit for difference if marker is not detected for a time
        if diffx>0.2:
@@ -259,9 +275,9 @@ class controlThread(threading.Thread):
        #diffx=errorx-errorprex
        #diffy=errory-errorprey
        if abs(errorx)<2.2:
-        integral_x+=errorx/100
+        integral_x+=(errorx/100)*self.pitch['ki']
        if abs(errory)<2.2: 
-        integral_y+=errory/100
+        integral_y+=(errory/100)*self.pitch['ki']
        
        
        prox=self.pitch['kp']*errorx
@@ -291,8 +307,8 @@ class controlThread(threading.Thread):
          if rerrory<1.0:
            proy*=rerrory 
        #print("prox:",prox,"proy:",proy)          
-       pid_x=prox+self.pitch['ki']*integral_x+self.pitch['kd']*(diffx)
-       pid_y=proy+self.roll['ki']*integral_y+self.roll['kd']*(diffy)
+       pid_x=prox+integral_x+self.pitch['kd']*(diffx)
+       pid_y=proy+integral_y+self.roll['kd']*(diffy)
        
        LIMIT=100
        if pid_x>LIMIT:
@@ -331,13 +347,12 @@ class controlThread(threading.Thread):
        kpz=self.throttle['kp']
        ### kdz is doubled when height is decreasing from fixes point  ###
        if alt[self.node]<fix_alt[self.node] and diffz<0:    # increase the kd if drone height is decreasing from set point
-        kdz*=2
+        kdz*=1.8
        elif alt[self.node]>fix_alt[self.node] and diffz>0: # reduce the kd if drone is crossing the set point height 
-        kdz/=3
-       elif alt[self.node]>fix_alt[self.node]:            # if drone is above the set point then reduce the kp to decrease the throttle gradualy
-        kpz/=2 
+        kdz/=2
+        kpz/=2                                              # if drone is above the set point then reduce the kp to decrease the throttle gradualy 
         
-       integral_z+=errorz/200
+       integral_z+=(errorz/200)*self.throttle['ki']
        if integral_z<-35:
         integral_z=-35
        #if alts<falt and errorz>3 and diffz<2:
@@ -350,7 +365,7 @@ class controlThread(threading.Thread):
        elif propz>200:
         propz=200
        print("propz:",propz)  
-       speedz=propz+self.throttle['ki']*integral_z+kdz*diffz
+       speedz=propz+integral_z+kdz*diffz
        #print("speedz:",speedz)
        ### To maintain the throttle upper value as 2000
        throttle=1500-speedz
@@ -363,8 +378,8 @@ class controlThread(threading.Thread):
        
        
        # assigning calculated values to PlutoMsg object
-       cmd.rcYaw=1500
-       cmd.rcYaw=1500-yaw_cmd
+       cmd.rcYaw=1400
+       cmd.rcYaw=1500+yaw_cmd
        cmd.rcRoll=speedy
        cmd.rcPitch=speedx
        cmd.rcThrottle=throttle
@@ -421,37 +436,44 @@ def image_data(data):
      
      posear=data.poses
      length=len(posear)
+     tmp_x=[0.0]*NODES
+     tmp_y=[0.0]*NODES
+     tmp_z=[0.0]*NODES
      for i in range(length):
-       pos_x[i]=posear[i].position.x
-       pos_y[i]=posear[i].position.y
-       pos_z[i]=posear[i].position.z
+       tmp_x[i]=posear[i].position.x
+       tmp_y[i]=posear[i].position.y
+       tmp_z[i]=posear[i].position.z
      
      # temporary list to store the current postion of drones
-     tmp_x=pos_x
-     tmp_y=pos_y
-     tmp_z=pos_z
      
+     
+     selected=[False]*length
      # to find the x position of drones according to pre position
      for x in range(length):
-       small=100
+       smallx=100
+       smally=100
        s_index=0
        for y in range(length):
-          if small>abs(pos_px[y]-tmp_x[x]):
+          if smallx>abs(pos_px[y]-tmp_x[x]):
+           if selected[y]==False:
              small=abs(pos_px[y]-tmp_x[x])
              s_index=y
-          pos_x[s_index]=tmp_x[x]
-          
-                    
+       pos_x[s_index]=tmp_x[x]
+       selected[s_index]=True   
+     
+     selected=[False]*length               
      # to find the y position of drones according to pre position
      for x in range(length):
        small=100
        s_index=0
        for y in range(length):
           if small>abs(pos_py[y]-tmp_y[x]):
+           if selected[y]==False:
              small=abs(pos_py[y]-tmp_y[x])
              s_index=y
-          pos_y[s_index]=tmp_y[x]   
-          
+       pos_y[s_index]=tmp_y[x]
+       selected[s_index]=True     
+           
                                         
      # to find the x position of drones according to pre position
      for x in range(length):
@@ -461,18 +483,23 @@ def image_data(data):
           if small>abs(pos_pz[y]-tmp_z[x]):
              small=abs(pos_pz[y]-tmp_z[x])
              s_index=y
-          pos_z[s_index]=tmp_z[x]    
+       pos_z[s_index]=tmp_z[x]
+          
      
      
      # assigning current val to pre val array
+     print("pos_px:"+str(pos_px))
+     print("pos_py:"+str(pos_py))
      pos_px=pos_x
      pos_py=pos_y
      pos_pz=pos_z
      
      # debuging point 
-     #print(pos_x)
-     #print(pos_y)
-     #print(pos_z)
+     print("pos_x:"+str(pos_x))
+     print("pos_y:"+str(pos_y))
+     print(pos_z)
+     print("tmp_x:"+str(tmp_x))
+     print("tmp_y:"+str(tmp_y))
      
      '''     
      seq=data.header.seq     
@@ -686,7 +713,7 @@ if __name__ == '__main__':
     drone0=controlThread(0,pid_pitch[0],pid_roll[0],pid_yaw[0],pid_throttle[0],'/drone_command_0')
     #drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
     
-    drone0.start()
+    #drone0.start()
     #drone1.start()
     
     # thread to read data from the drone sensor and whycon
