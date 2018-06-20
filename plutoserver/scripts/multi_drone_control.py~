@@ -50,8 +50,8 @@ is_first_yaw=[True]*NODES
 
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':25.0,'kd':700.0,'ki':10.0}]*NODES   # 8,240,15
-pid_roll=[{'kp':25.0,'kd':700.0,'ki':10.0}]*NODES
+pid_pitch=[{'kp':15.0,'kd':400.0,'ki':4.0}]*NODES   # 8,240,15
+pid_roll=[{'kp':15.0,'kd':400.0,'ki':4.0}]*NODES
 pid_yaw=[{'kp':50.0,'kd':3.0,'ki':0.0}]*NODES
 pid_throttle=[{'kp':11.0,'kd':80.0,'ki':1.5}]*NODES
 
@@ -224,7 +224,7 @@ class controlThread(threading.Thread):
     
     while(1):
        # delay according to drone processing rate
-       rospy.sleep(0.025)
+       rospy.sleep(0.045)
            
        ######## PID to control the YAW of the drone  #################
        erroryaw=fix_yaw[self.node]-yaw[self.node]
@@ -445,176 +445,103 @@ def image_data(data):
        tmp_z[i]=posear[i].position.z
      
      # temporary list to store the current postion of drones
-     
-     
-     selected=[False]*length
-     # to find the x position of drones according to pre position
+     posp_x=[0 for i in range(NODES)]
+     posp_y=[0 for i in range(NODES)]
+     selectedx=[False for i in range(length)]
+     selectedy=[False for i in range(length)]
+     # to find the x and y position of drones according to pre position
      for x in range(length):
        smallx=100
        smally=100
-       s_index=0
+       sx_index=0
+       sy_index=0
        for y in range(length):
           if smallx>abs(pos_px[y]-tmp_x[x]):
-           if selected[y]==False:
-             small=abs(pos_px[y]-tmp_x[x])
-             s_index=y
-       pos_x[s_index]=tmp_x[x]
-       selected[s_index]=True   
+           if selectedx[y]==False:
+             smallx=abs(pos_px[y]-tmp_x[x])
+             sx_index=y
+          if smally>abs(pos_py[y]-tmp_y[x]):
+           if selectedy[y]==False:
+             smally=abs(pos_py[y]-tmp_y[x])
+             sy_index=y
+       #pos_y[sy_index]=tmp_y[x]
+       posp_y[sy_index]=x   
+       #pos_x[sx_index]=tmp_x[x]
+       posp_x[sx_index]=x
+       selectedx[sx_index]=True
+       selectedx[sx_index]=True 
+      
+      
+     # calculating the x-axis possible positions   
+     ar_x=[[-1 for i in range(length)] for i in range(length)]
+     index=[1 for i in range(length)]
+     for x in range(length):
+        y=x+1
+        ar_x[posp_x[x]][0]=x
+        #print("x:"+str(ar_x))
+        #index[posp_x[x]]=1
+        while y<length:
+          if abs(tmp_x[posp_x[x]]-tmp_x[posp_x[y]])<0.5:
+             ar_x[posp_x[x]][index[posp_x[x]]]=y
+             ar_x[posp_x[y]][index[posp_x[y]]]=x
+             print(ar_x[posp_x[x]][index[posp_x[x]]])
+             index[posp_x[x]]+=1
+             index[posp_x[y]]+=1
+          y+=1    
      
-     selected=[False]*length               
-     # to find the y position of drones according to pre position
+     
+     # calculating the y-axis possible positions      
+     ar_y=[[-1 for i in range(length)] for i in range(length)]
+     index_y=[1 for i in range(length)] 
      for x in range(length):
-       small=100
-       s_index=0
-       for y in range(length):
-          if small>abs(pos_py[y]-tmp_y[x]):
-           if selected[y]==False:
-             small=abs(pos_py[y]-tmp_y[x])
-             s_index=y
-       pos_y[s_index]=tmp_y[x]
-       selected[s_index]=True     
-           
-                                        
-     # to find the x position of drones according to pre position
-     for x in range(length):
-       small=100
-       s_index=0
-       for y in range(length):
-          if small>abs(pos_pz[y]-tmp_z[x]):
-             small=abs(pos_pz[y]-tmp_z[x])
-             s_index=y
-       pos_z[s_index]=tmp_z[x]
-          
+        y=x+1
+        ar_y[posp_y[x]][0]=x
+        #index_y[posp_y[x]]=1
+        while y<length: 
+          if abs(tmp_y[posp_y[x]]-tmp_y[posp_y[y]])<0.5:
+             ar_y[posp_y[x]][index_y[posp_y[x]]]=y
+             ar_y[posp_y[y]][index_y[posp_y[y]]]=x
+             index_y[posp_y[x]]+=1
+             index_y[posp_y[y]]+=1
+          y=y+1      
+       
+       
+      
+     # assigning values according to the change in x and y positions  
+     for i in range(length):
+       j=0
+       while j<length:
+         k=0
+         while k<length:
+           if ar_x[i][j]==ar_y[i][k]:
+             pos_x[i]=tmp_x[ar_x[i][j]]
+             pos_y[i]=tmp_y[ar_x[i][j]]
+             pos_z[i]=tmp_z[ar_x[i][j]]
+             k=20
+             j=20
+           k+=1
+         j+=1    
+     
+         
+     
      
      
      # assigning current val to pre val array
-     print("pos_px:"+str(pos_px))
-     print("pos_py:"+str(pos_py))
+     #print("pos_px:"+str(pos_x))
+     #print("pos_py:"+str(pos_y))
      pos_px=pos_x
      pos_py=pos_y
      pos_pz=pos_z
      
+     
      # debuging point 
-     print("pos_x:"+str(pos_x))
-     print("pos_y:"+str(pos_y))
-     print(pos_z)
+     print("posp_x:"+str(posp_x))
+     print("posp_y:"+str(posp_y))
      print("tmp_x:"+str(tmp_x))
      print("tmp_y:"+str(tmp_y))
+     print("ar_x:"+str(ar_x))
+     print("ar_y:"+str(ar_y))
      
-     '''     
-     seq=data.header.seq     
-     posear=data.poses
-     zpos=0.0
-     
-     ##### if no of markers drone_detected is two #####
-     if len(posear)==2:
-      markers=2
-      runner_detected=1
-      runner_detect_counter+=1
-      if caveflag==0:
-       cavecount=0
-      elif runner_detect_counter>6:
-       cavecount=0 
-      tmpx=posear[0].position.x
-      tmpy=posear[0].position.y
-      tmpz=posear[0].position.z
-      
-      ####*****************************************************************************#####
-      #### Whycon detect marker's z value based on the radius of the marker drone_detected   #####
-      #### when the marker position is not at the center of the camera, then the marker#####
-      #### become the eclipse hence the z calculated by the whycon decreases as marker #####
-      #### postion is in either side of camera , by a factor z . So we multiply the z  #####
-      #### value with a factor a(0.3) hence this will give approximate the equal       #####
-      #### of Z at every position if the height of the marker is same                  #####
-      ####*****************************************************************************#####
-      
-      if abs(tmpx)>abs(tmpy):
-         tmpz+=abs(tmpx)*0.2
-      else:
-         tmpz+=abs(tmpy)*0.2
-      
-      tmpfx=posear[1].position.x
-      tmpfy=posear[1].position.y
-      tmpfz=posear[1].position.z
-      
-      if abs(tmpfx)>abs(tmpfy):
-         tmpfz+=abs(tmpfx)*0.2
-      else:
-         tmpfz+=abs(tmpfy)*0.2
-      
-      #### if the z value of marker is less then 31 then the marker is of drone    
-      if tmpz<22:
-        drone_detected=1
-        x=tmpx
-        y=tmpy
-        z=tmpz
-        fpx=tmpfx
-        fpy=tmpfy
-        zpos=tmpfz
-      elif tmpfz<22:
-        drone_detected=1
-        x=tmpfx
-        y=tmpfy
-        z=tmpfz
-        fpx=tmpx
-        fpy=tmpy
-        zpos=tmpz
-     else:
-       tmpx=posear[0].position.x
-       tmpy=posear[0].position.y
-       tmpz=posear[0].position.z
-      
-       if abs(tmpx)>abs(tmpy):
-         tmpz+=abs(tmpx)*0.2
-       else:
-         tmpz+=abs(tmpy)*0.2 
-       markers=1 
-       #### if the z value of marker is less then 31 then the marker is of drone 
-       if tmpz<22:
-        drone_detected=1
-        #cavecount+=1
-        runner_detect_counter=0
-        x=tmpx
-        y=tmpy
-        z=tmpz
-       else:
-        runner_detected=1
-        runner_detect_counter+=1
-        if caveflag==0:
-         cavecount=0
-        elif runner_detect_counter>6:
-         cavecount=0 
-        fpx=tmpx
-        fpy=tmpy
-        zpos=tmpz
-        
-        
-    
-    
-    
-     ##### Updating drone_timediff vairable according to the time difference between the last drone_detected image #####
-     if drone_detected==1:
-       timenow=time.time()
-       if (timenow-drone_timepre)>drone_timediff:      #### updating the drone_timediff if current drone_timediff is greater than the maximum time difference 
-                                           #### in a time 
-         drone_timediff=timenow-drone_timepre   
-       
-       drone_timepre=timenow     
-    
-     ##### Updating runner_timediff vairable according to the time difference between the last drone_detected image #####
-     if runner_detected==1:
-       timenow=time.time()
-       if (timenow-runner_timepre)>runner_timediff:      #### updating the timediff if current timediff is greater than the maximum time difference 
-                                           #### in a time 
-         runner_timediff=timenow-runner_timepre   
-       
-       runner_timepre=timenow   
-       '''
-
-
-
-
-
 
 
 
@@ -713,7 +640,7 @@ if __name__ == '__main__':
     drone0=controlThread(0,pid_pitch[0],pid_roll[0],pid_yaw[0],pid_throttle[0],'/drone_command_0')
     #drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
     
-    #drone0.start()
+    drone0.start()
     #drone1.start()
     
     # thread to read data from the drone sensor and whycon
