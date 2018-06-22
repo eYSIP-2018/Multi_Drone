@@ -1,0 +1,97 @@
+\documentclass[10pt, a4paper]{beamer}
+
+\usetheme{Berkeley}
+\usecolortheme{sidebartab}
+
+\begin{document}
+	\setbeamertemplate{sidebar left}{}
+	\title{Progress Presentation-I}
+	\subtitle{e-Yantra Summer Internship-2018 \\ $<$\textbf{Multiple Drone Control}$>$}
+	\author{Sunil Kumar\\Shruti Joshi\\
+	Mentor: Vikrant Fernandes\\Simranjeet Bhangu}
+	\institute{IIT Bombay}
+	\date{\today}
+	%\addtobeamertemplate{sidebar left}{}{\includegraphics[scale = 0.3]{logowithtext.png}}
+	\frame{\titlepage}
+
+\setbeamertemplate{sidebar left}[sidebar theme]
+\section{Overview of Project}
+\begin{frame}{Overview of Project}
+	
+	\begin{itemize}
+		\item Project Name:Multiple Drone Control
+		\item Objective:To control more than one drone by a single master.
+		\item Deliverables:Video tutorials(along with scripts) explaining each module.
+	\end{itemize}
+\end{frame}
+
+\section{Overview of Task}
+\begin{frame}{Overview of Task}
+        \begin{center}
+
+\begin{tabular}{ |p{1cm}||p{6.8cm}|p{1.3cm}| }
+ \hline
+ \multicolumn{3}{|c|}{Project Task List} \\
+ \hline
+ Task No. & \centering Task & Deadline\\
+ \hline
+ \textbf{1}& \textbf{Understanding the current pluto drone ROS package}  & \textbf{2 day}\\
+ \hline
+ \textbf{2}&   \textbf{Updating single master multiple client node to receive data from the drones} & \textbf{3 days} \\
+ \hline
+ \textbf{3} & \textbf{Position hold of both drones} & \textbf{7 days}\\
+ \hline
+ \textbf{4} & \textbf{Coordinated waypoint navigation using whycon} & \textbf{7 days}\\
+ \hline
+\textbf{ 5} &  \textbf{Exploring drone drone communication}  & \textbf{7 days}\\
+ \hline
+\textbf{ 6} & \textbf{Documentaton}  & \textbf{ 4 days}  \\
+
+ \hline
+\end{tabular}
+ 
+\end{center}
+
+ \end{frame}
+\section{Task Accomplished}
+\begin{frame}{Task Accomplished}
+	\begin{itemize}
+              
+                \item Updated single master multiple client node to receive data from the drones.
+             \item Each drone in the network acts as Station and is connected to a single Access point.
+        \item Commands are sent by defining unique topic names for each drones.
+		
+		
+\item Seperating each drone under camera using whycon:-
+Seperating each drone identity under camera using same type whycon marker.
+	\end{itemize}
+\end{frame}
+
+\section{Challenges Faced}
+\begin{frame}{Challenges Faced}
+	\begin{itemize}
+               
+		\item Communicating with multiple drones with socket programming and ROS.
+\item Importing more than one Ardrone model with unique topics in Gazebo.                 
+\item Seperating the drone identities in whycon markers.
+                \item Stabilizing the yaw of the drones due to magnetometer error.
+                 
+	\end{itemize}
+\end{frame}
+
+\section{Future Plans}
+\begin{frame}{Future Plans}
+	\begin{itemize}
+\item Simulation on Gazebo showing coordinated motion of more than one drone .
+		\item Efficient communication between drones and access point taking into consideration the latency due to internal and external factors.
+\item Coordinated motion of more than one drone along a specific path.
+	\end{itemize}
+\end{frame}
+
+
+\section{Thank You}
+\begin{frame}{Thank You}
+	\centering THANK YOU !!!
+\end{frame}
+\end{document}
+
