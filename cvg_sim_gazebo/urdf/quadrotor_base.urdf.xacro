@@ -3,8 +3,7 @@
 <robot xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
 xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
 xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
-xmlns:xacro="http://ros.org/wiki/xacro"
->
+xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:include filename="$(find cvg_sim_gazebo_plugins)/urdf/quadrotor_plugins.urdf.xacro" />
   <property name="pi" value="3.1415926535897931" />
@@ -13,26 +12,52 @@ xmlns:xacro="http://ros.org/wiki/xacro"
   <xacro:macro name="quadrotor_base_macro">
     <link name="base_link">
       <inertial>
-        <mass value="1.477" />
+        <mass value="1.5" />
         <origin xyz="0 0 0" />
-        <inertia ixx="0.01152" ixy="0.0" ixz="0.0" iyy="0.01152" iyz="0.0" izz="0.0218" />
+        <inertia ixx="0.0137211" ixy="0.0" ixz="-2.28206e-05" iyy="0.0144665" iyz="0.0" izz="0.0247454" />
       </inertial>
 
-      <visual>
+      <visual >
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://cvg_sim_gazebo/meshes/quadrotor/quadrotor_4.dae"/>
+          <!--<mesh filename="package://cvg_sim_gazebo/meshes/quadrotor/quadrotor_4.dae"/>-->
+          <mesh filename="/home/chaser_drone/quadrotor/quadrotor_4.dae"/>
         </geometry>
       </visual>
 
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
         <geometry>
-          <mesh filename="package://cvg_sim_gazebo/meshes/quadrotor/quadrotor_4.stl"/>
+          <!--<mesh filename="package://cvg_sim_gazebo/meshes/quadrotor/quadrotor_4.stl"/>-->
+	<mesh filename="/home/chaser_drone/quadrotor/quadrotor_4.stl"/>
         </geometry>
       </collision>
     </link>
 
+
+
+
+    <link name="marker_link">
+      <inertial>
+        <mass value="0" />
+        <origin xyz="0 0 0" />
+        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0" />
+      </inertial>
+
+      <visual >
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="/home/shruti/catkin_ws/src/task_1/material/marker0/meshes/Marker0.dae"/>
+        </geometry>
+      </visual>
+    </link>
+
+
+<joint name="my_joint" type="fixed">
+    <origin xyz="-.25 0 0.065" rpy="0 1.57 0"/>
+    <parent link="base_link"/>
+    <child link="marker_link"/>
+ </joint>
 
 
     <gazebo reference="base_link">
@@ -40,6 +65,8 @@ xmlns:xacro="http://ros.org/wiki/xacro"
     </gazebo>
 
     <!-- Gazebo Plugins -->
-    <quadrotor_plugins/>
+    <quadrotor_plugins>
+ 
+</quadrotor_plugins>
   </xacro:macro>
 </robot>
