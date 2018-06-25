@@ -671,9 +671,9 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-                              cout<<"\nYaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
-                              cout<<"\nThrottle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
-                              cout<<"\nAUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
+                              cout<<"\nsockID:"<<sockID<<"  Yaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
+                              //cout<<"\nThrottle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
+                              //cout<<"\nAUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
              break;
 
           default:

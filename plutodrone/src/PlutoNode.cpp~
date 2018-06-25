@@ -18,7 +18,7 @@
 
 
 #define PORT 23
-#define NODES 1
+#define NODES 2
 using namespace std;
 
 
@@ -66,7 +66,7 @@ void *writeFunction(void *arg)
 
   while(1)
   {
-    //com[*index].sendRequestMSP_SET_RAW_RC(userRC[*index]);
+    com[*index].sendRequestMSP_SET_RAW_RC(userRC[*index]);
     com[*index].sendRequestMSP_GET_DEBUG(requests);
     //com.sendRequestMSP_SET_RAW_RC(userRC);
     //com.sendRequestMSP_GET_DEBUG(requests);
@@ -172,7 +172,7 @@ int main(int argc, char **argv)
     
    all_ips.push_back("192.168.43.208");
    //all_ips.push_back("192.168.4.1");
-    //all_ips.push_back("192.168.43.243");
+    all_ips.push_back("192.168.43.141");
     //all_ips.push_back("192.168.43.1");
   
     char topic_name[] = "drone_command_ ";
