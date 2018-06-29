@@ -41,9 +41,9 @@ class request_data(threading.Thread):
 if __name__ == '__main__':
         rospy.init_node('drone_board_data')
         node_0 = request_data("PlutoService_0","/Sensor_data_0")
-        #node_1 = request_data("PlutoService_1","/Sensor_data_1")
+        node_1 = request_data("PlutoService_1","/Sensor_data_1")
         node_0.start()
-        #node_1.start()
+        node_1.start()
         rospy.spin()
 
 
