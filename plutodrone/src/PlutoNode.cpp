@@ -171,10 +171,12 @@ int main(int argc, char **argv)
     
     
    
-   //all_ips.push_back("192.168.4.1");
+  //all_ips.push_back("192.168.4.1");
     //all_ips.push_back("192.168.43.3");
-    all_ips.push_back("192.168.0.125");
-    all_ips.push_back("192.168.0.183");
+    all_ips.push_back("192.168.0.125");    // Node_0
+    all_ips.push_back("192.168.0.174");    //Node_2
+    //all_ips.push_back("192.168.0.183");    // Node_1
+    
     //all_ips.push_back("192.168.43.208");
   
     char topic_name[] = "drone_command_ ";

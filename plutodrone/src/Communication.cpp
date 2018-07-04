@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <plutodrone/Communication.h>
+
+#include <time.h>
 //#include <plutodrone/Protocol.h>
 //#include <stdlib.h>
 
@@ -672,8 +674,17 @@ void Communication::evaluateCommand(int command)
                              //printf("rcAUX4 %i\n",rcAUX4);
 
                               //cout<<"\nsockID:"<<sockID<<"  Yaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
-                              //cout<<" Throttle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
+                             // cout<<" Throttle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
                               //cout<<" AUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
+                             //cout<<"time:"<<time(0);
+
+                             /*count++;
+                             if (time(0)-saved_time)
+                              count=0;
+                             saved_time=time(0);
+                             cout<<" "<<count;*/
+
+
              break;
 
           default:

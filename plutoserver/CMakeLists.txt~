@@ -53,6 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    floatar.msg
+   PlotData.msg
   )
 
 ## Generate services in the 'srv' folder
@@ -107,7 +108,7 @@ generate_messages(
 catkin_package(
   #INCLUDE_DIRS include
   LIBRARIES plutoclient
-  CATKIN_DEPENDS roscpp rospy std_msgs plutoserver
+  CATKIN_DEPENDS roscpp rospy std_msgs 
   #DEPENDS system_lib
   message_runtime
 )
