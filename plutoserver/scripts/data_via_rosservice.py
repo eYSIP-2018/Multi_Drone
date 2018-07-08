@@ -23,13 +23,16 @@ class request_data(threading.Thread):
 
 	def access_data(self, req):
 		 #print "accx = " + str(req.accX), "accy = " + str(req.accY), "accz = " + str(req.accZ)
-		 #print "gyrox = " + str(req.gyroX), "gyroy = " + str(req.gyroY), "gyroz = " + str(req.gyroZ)
+		 print "gyrox = " + str(req.gyroX), "gyroy = " + str(req.gyroY), "gyroz = " + str(req.gyroZ)
 		 print "magx = " + str(req.magX), "magy = " + str(req.magY), "magz = " + str(req.magZ)
 		 print self.drone_topic + ":"
 		 print "roll = " + str(req.roll), "pitch = " + str(req.pitch), "yaw = " + str(req.yaw)
 		 print "altitude = " +str(req.alt)
 		 print " "
 		 poses=floatar()
+		 poses.gx=req.gyroX
+		 poses.gy=req.gyroY
+		 poses.gz=req.gyroZ
 		 poses.pitch=req.accX
 		 poses.roll=req.accY
 		 poses.yaw=req.yaw
@@ -45,7 +48,7 @@ if __name__ == '__main__':
         node_2 = request_data("PlutoService_2","/Sensor_data_2")
         node_0.start()
         node_1.start()
-        #node_2.start()
+        node_2.start()
         rospy.spin()
 
 

@@ -1,11 +1,11 @@
 <launch>
    <arg name="name" default="whycon"/>
-   <arg name="targets" default="2"/>
+   <arg name="targets" default="1"/>
    <arg name="outer_diameter" default=".52"/>
    <arg name="inner_diameter" default=".19"/>
 
    <node name="usb_cam" pkg="usb_cam" type="usb_cam_node" output="screen" >
-    <param name="video_device" value="/dev/video0" />
+    <param name="video_device" value="/dev/video1" />
     <param name="image_width" value="640" />
     <param name="image_height" value="480" />
     <param name="pixel_format" value="yuyv" />

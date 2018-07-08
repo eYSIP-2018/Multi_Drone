@@ -26,7 +26,7 @@ from pid_tune.msg import PidTune
 
 
 # Number of nodes (drones to control)
-NODES=2
+NODES=1
 
 # Vraibles to store the whycon positions of drones
 pos_x=[0.0 for i in range(NODES)]
@@ -34,8 +34,10 @@ pos_y=[0.0 for i in range(NODES)]
 pos_z=[0.0 for i in range(NODES)]
 
 # variables to store the previous values of drones 
-pos_px=[-4.0,4.0,4.0]
-pos_py=[0.0 for i in range(NODES)]
+pos_px=[0.0,0.0,4.5]
+pos_py=[0.0,0.0,4.5]
+#pos_px=[-4.5,4.5,4.5]
+#pos_py=[0.0,-4.5,4.5]
 pos_pz=[0.0 for i in range(NODES)]
 
 # variables to store the sensor values of drones
@@ -43,20 +45,26 @@ pitch=[0.0 for i in range(NODES)]
 roll=[0.0 for i in range(NODES)]
 alt=[0.0 for i in range(NODES)]
 yaw=[0.0 for i in range(NODES)]
+g_z=[0.0 for i in range(NODES)]
 
 # fixed values 
 fix_yaw=[0.0 for i in range(NODES)]
-fix_x=[-5.0,5.0,5.0]
-fix_y=[0.0,0.0,5.0]
+fix_x=[0.0,0.0,4.5]
+fix_y=[0.0,0.0,4.5]
 fix_alt=[18.0]*NODES
 is_first_yaw=[True]*NODES
 
+# flag varible to start the drone pid
+exit_flag=False
+start_flag=True
+control_flag=True
+
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':19.0,'kd':700.0,'ki':4.0},{'kp':18.0,'kd':610.0,'ki':4.0},{'kp':18.0,'kd':610.0,'ki':4.0}]  # 8,240,15
-pid_roll=[{'kp':19.0,'kd':700.0,'ki':4.0},{'kp':18.0,'kd':610.0,'ki':4.0},{'kp':18.0,'kd':610.0,'ki':4.0}]
-pid_yaw=[{'kp':10.0,'kd':3.0,'ki':0.0},{'kp':10.0,'kd':3.0,'ki':0.0},{'kp':10.0,'kd':3.0,'ki':0.0}]
-pid_throttle=[{'kp':50.0,'kd':77.0,'ki':2.0},{'kp':40.0,'kd':77.0,'ki':2.0},{'kp':40.0,'kd':77.0,'ki':2.0}]
+pid_pitch=[{'kp':12.0,'kd':610.0,'ki':4.0},{'kp':11.0,'kd':610.0,'ki':6.0},{'kp':18.0,'kd':610.0,'ki':6.0}]  # 8,240,15
+pid_roll=[{'kp':11.0,'kd':610.0,'ki':4.0},{'kp':11.0,'kd':610.0,'ki':6.0},{'kp':18.0,'kd':610.0,'ki':6.0}]
+pid_yaw=[{'kp':0.0,'kd':0.0,'ki':35.0},{'kp':10.0,'kd':3.0,'ki':0.0},{'kp':10.0,'kd':3.0,'ki':0.0}]
+pid_throttle=[{'kp':55.0,'kd':77.0,'ki':2.0},{'kp':50.0,'kd':77.0,'ki':2.0},{'kp':40.0,'kd':77.0,'ki':2.0}]
 
 
 
@@ -188,7 +196,7 @@ class controlThread(threading.Thread):
    '''
 
    def run(self):
-    global pos_x,pos_y,pos_z,pitch,roll,yaw,alt,fix_yaw,fix_x,fix_y,fix_alt
+    global pos_x,pos_y,pos_z,pitch,roll,g_z,yaw,alt,fix_yaw,fix_x,fix_y,fix_alt,start_flag,exit_flag,control_flag
     
     maxpropx=60.0
     maxpropy=60.0
@@ -220,16 +228,11 @@ class controlThread(threading.Thread):
 
 
 
-    flag=True
-    while flag:
-      while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
-             line = sys.stdin.readline()
-             if line=="p\n":
-              flag=False
-             elif line=="n\n":
-              sys.exit()  
+    while start_flag:
+      if exit_flag:
+        sys.exit()  
     print("Node "+str(self.node)+" OK Started...")
-
+    control_flag=False
 
     if True:
      self.disarm() 
@@ -290,7 +293,12 @@ class controlThread(threading.Thread):
         fix_yy=pos_y[self.node] '''
            
        ######## PID to control the YAW of the drone  #################
-       erroryaw=fix_yaw[self.node]-yaw[self.node]
+       #erroryaw=fix_yaw[self.node]-yaw[self.node]
+       gyro_z=g_z[self.node]
+       if abs(gyro_z)<20:
+         gyro_z=0
+
+       erroryaw=g_z[self.node]
        '''if abs(erroryaw)>200:
          erroryaw=fyaw-(yaws+((abs(erroryaw)/erroryaw)*360))'''
        integral_yaw+=erroryaw/200 
@@ -343,9 +351,9 @@ class controlThread(threading.Thread):
            
        #diffx=errorx-errorprex
        #diffy=errory-errorprey
-       if abs(errorx)<2.2:
+       if abs(errorx)<2.8:
         integral_x+=(errorx/100)*self.pitch['ki']
-       if abs(errory)<2.2: 
+       if abs(errory)<2.8: 
         integral_y+=(errory/100)*self.pitch['ki']
        
        
@@ -410,10 +418,10 @@ class controlThread(threading.Thread):
        if prez==0.0:
          diffz=0.0
 
-       if diffz<-1.8:
-        diffz=-1.8
-       elif diffz>1.8:
-        diffz=1.8
+       if diffz<-1.5:
+        diffz=-1.5
+       elif diffz>1.5:
+        diffz=1.5
 
        # low pass filter to z
        diffz=diffz*0.55+diffz_filter[0]*0.15+diffz_filter[1]*0.15+diffz_filter[2]*0.15
@@ -470,8 +478,10 @@ class controlThread(threading.Thread):
          pid_y=0.0'''
 
        throttle=1500-speedz 
-       speedx=1500-pid_x
-       speedy=1500-pid_y
+       #speedx=1500-pid_x
+       #speedy=1500-pid_y
+       speedy=1500+pid_x
+       speedx=1500-pid_y
 
 
        if throttle>2000:
@@ -483,8 +493,8 @@ class controlThread(threading.Thread):
        
        
        # assigning calculated values to PlutoMsg object
-       cmd.rcYaw=1500
-       #cmd.rcYaw=1500+yaw_cmd
+       #cmd.rcYaw=1500
+       cmd.rcYaw=1500+yaw_cmd
        cmd.rcRoll=speedy
        cmd.rcPitch=speedx
        cmd.rcThrottle=throttle
@@ -498,7 +508,7 @@ class controlThread(threading.Thread):
        #print("diffy:"+str(self.node)+": "+str(diffy))
        
        #print("Throttle"+str(self.node)+": "+str(throttle))
-       #print("Yaw"+str(self.node)+": "+str(cmd.rcYaw))
+       print("Yaw"+str(self.node)+": "+str(cmd.rcYaw))
        #print("Roll"+str(self.node)+": "+str(cmd.rcRoll))
        #print("Pitch"+str(self.node)+": "+str(cmd.rcPitch))
        
@@ -634,11 +644,12 @@ def image_data(data):
 '''
 
 def readData(data,x):
-    global pitch,roll,alt,yaw,fix_yaw,is_first_yaw
+    global pitch,roll,alt,yaw,fix_yaw,is_first_yaw,g_z
     pitch[x]=data.pitch
     roll[x]=data.roll
     yaw[x]=data.yaw
     alt[x]=data.alt
+    g_z[x]=data.gz
     if is_first_yaw[x]:
       fix_yaw[x]=data.yaw+6
       is_first_yaw[x]=False
@@ -679,10 +690,19 @@ def change_PID(data):
     print(pid_roll)
 
 
+'''
+* Function Name: draw_circle
+* Input:  circle type and arc radius
+* Output: Set target as points of circle arc
+* Logic:  Itrate to update the target point such that the drone pass through the arc of a circle
+*
+* Example Call: draw_circle(num,arc)
+'''
 
 
 def draw_circle(num,arc):
-    # drawing circle as one drone at center and other drawing the arc
+   global fix_x,fix_y
+   # drawing circle as one drone at center and other drawing the arc
    if num==0: 
     fix_x[0]=0.0
     fix_y[0]=0.0
@@ -722,7 +742,82 @@ def draw_circle(num,arc):
           print("y:"+str(fix_y[1]))      
 
 
+'''
+* Function Name: draw_square
+* Input:  square type and arc radius
+* Output: Set target as points of square nodes
+* Logic:  Itrate to update the target point such that the drone pass through the nodes of a square
+*
+* Example Call: draw_square(num,size)
+'''
 
+
+def draw_square(num,size):
+     global fix_x,fix_y
+
+
+     if num==1:
+        ar_x=[-size,-size,size,size]
+        ar_y=[-size,size,size,-size]
+        fix_x[2]=size
+        fix_y[2]=size
+        fix_x[0]=-fix_x[2]
+        fix_y[0]=-fix_y[2]
+        rad=3.14/180
+        for i in range(5):
+          while  not(abs(pos_x[2]-fix_x[2])<0.5 and abs(pos_y[2]-fix_y[2])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[0]-fix_y[0])<0.5):
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+             line = sys.stdin.readline()
+             if line=="q\n":
+              sys.exit()
+          fix_x[0]=ar_x[i%4]
+          fix_y[0]=ar_y[i%4]
+          fix_x[2]=-fix_x[0]
+          fix_y[2]=-fix_y[0]
+          print("x:"+str(fix_x[0]))
+          print("y:"+str(fix_y[0]))
+          rospy.sleep(5)
+
+
+'''
+* Function Name: draw_triangle
+* Input:  triangle size
+* Output: Set target as points of triangle nodes
+* Logic:  Itrate to update the target point such that the drone pass through the nodes of a triangle
+*
+* Example Call: draw_square(size)
+'''
+
+def draw_triangle(size):
+     global fix_x,fix_y
+
+     ar_x=[-size,-size/2,size,size+size/2,size,0.0]
+     ar_y=[0.0,size/2,-size,0.0,size,size]
+     fix_x[0]=ar_x[0]
+     fix_y[0]=ar_y[0]
+
+     fix_x[1]=ar_x[1]
+     fix_y[1]=ar_y[1]
+
+     fix_x[2]=ar_x[2]
+     fix_y[2]=ar_y[2]
+     
+     for i in range(6):
+          while  not(abs(pos_x[2]-fix_x[2])<0.5 and abs(pos_y[2]-fix_y[2])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[0]-fix_y[0])<0.5 and abs(pos_x[1]-fix_x[1])<0.5 and abs(pos_y[1]-fix_y[1])<0.5):
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+             line = sys.stdin.readline()
+             if line=="q\n":
+              sys.exit()
+          fix_x[0]=ar_x[i%3]
+          fix_y[0]=ar_y[i%3]
+          fix_x[1]=ar_x[(i+1)%3]
+          fix_y[1]=ar_y[(i+1)%3]
+          fix_x[2]=ar_x[(i+2)%3]
+          fix_y[2]=ar_y[(i+2)%3]
+          print("x:"+str(fix_x[0]))
+          print("y:"+str(fix_y[0]))
+          if i%2==0:
+           rospy.sleep(5)
 
 
 
@@ -737,14 +832,28 @@ if __name__ == '__main__':
 
     #### Making instance of thread and starting thread to control the drones  #####
     drone0=controlThread(0,pid_pitch[0],pid_roll[0],pid_yaw[0],pid_throttle[0],'/drone_command_0')
-    drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
+    #drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
     #drone2=controlThread(2,pid_pitch[2],pid_roll[2],pid_yaw[2],pid_throttle[2],'/drone_command_2')
     
     drone0.start()
-    drone1.start()
-    #drone2.start()
-
+    #drone1.start()
+   # drone2.start()
+    
     #draw_circle(0,5)
+    while control_flag:
+      while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+             line = sys.stdin.readline()
+             if line=="p\n":
+              start_flag=False
+             elif line=="n\n":
+              exit_flag=True
+              rospy.sleep(1)
+              sys.exit()
+
+    rospy.sleep(6)
+    #draw_triangle(3.5)
+    #draw_square(1,4.5)
+
     rospy.spin()
    
     
