@@ -1,0 +1,19 @@
+Script started on Monday 09 July 2018 02:01:38 PM IST
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon~/ROS_ws/src/whycon$ ls
+cite.bib         config.h.cmake      [0m[01;34mlaunch[0m        [01;34mpatterns[0m   [01;34msrv[0m
+[01;34mcmake-configs[0m    Doxyfile            [01;34mmsg[0m           README.md  typescript
+CMakeLists.txt   establish_error.rb  nodelets.xml  [01;34mscripts[0m
+CMakeLists.txt~  [01;34minclude[0m             package.xml   [01;34msrc[0m
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon~/ROS_ws/src/whycon$ ls
+cite.bib         config.h.cmake      [0m[01;34mlaunch[0m        [01;34mpatterns[0m   [01;34msrv[0m
+[01;34mcmake-configs[0m    Doxyfile            [01;34mmsg[0m           README.md  typescript
+CMakeLists.txt   establish_error.rb  nodelets.xml  [01;34mscripts[0m
+CMakeLists.txt~  [01;34minclude[0m             package.xml   [01;34msrc[0m
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon~/ROS_ws/src/whycon$ cd scripts/
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon/scripts~/ROS_ws/src/whycon/scripts$ ls
+[0m[01;32mchange_targets.py[0m  [01;32mchange_targets.py~[0m  [01;32mros_image_process.py[0m
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon/scripts~/ROS_ws/src/whycon/scripts$ cd ..
+]0;ubuntu-1404@ubuntu1404-Lenovo-G50-70: ~/ROS_ws/src/whycon~/ROS_ws/src/whycon$ exit
+exit
+
+Script done on Monday 09 July 2018 02:01:48 PM IST

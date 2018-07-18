@@ -1,0 +1,33 @@
+<launch>
+  <arg name="name" default="whycon"/>
+  <arg name="targets" default="1"/>
+  <arg name="outer_diameter" default=".54"/>
+   <arg name="inner_diameter" default=".19"/>
+<!--<include file="$(find task_1)/launch/task_1_1.launch"/>-->
+  
+<!--<remap from="/camera/image_rect_color" to="/usb_cam/image_raw"/>
+<remap from="/camera/camera_info" to="/usb_cam/camera_info"/>
+-->  
+    
+<remap from="/camera/image_rect_color" to="/main/image_raw"/>
+<remap from="/camera/camera_info" to="/main/camera_info"/>  
+ 
+
+
+
+  <group ns="camera">
+    <node pkg="image_proc" type="image_proc" name="image_proc"/>
+  </group>
+
+  <node name="whycon" type="whycon" pkg="whycon" output="screen">
+    <param name="targets" value="$(arg targets)"/>
+    <param name="name" value="$(arg name)"/>
+    <param name="outer_diameter" value="$(arg outer_diameter)"/>
+    <param name="inner_diameter" value="$(arg inner_diameter)"/>
+  </node>
+
+  <node name="transformer" type="transformer" pkg="whycon" output="screen"/>
+ 
+<!--<node name="axis" type="get_whycon_data.py" pkg="task_1" output="screen"/>-->
+</launch>
+  
