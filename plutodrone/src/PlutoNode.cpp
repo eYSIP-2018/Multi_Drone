@@ -18,7 +18,7 @@
 
 
 #define PORT 23
-#define NODES 1
+#define NODES 3
 using namespace std;
 
 
@@ -67,10 +67,21 @@ void *writeFunction(void *arg)
   while(1)
   {
     com[*index].sendRequestMSP_SET_RAW_RC(userRC[*index]);
+    /*struct  timeval tp;
+    gettimeofday(&tp, NULL);
+    long int c_t;
+    c_t=tp.tv_sec*1000000L+tp.tv_usec;
+    cout<<endl<<*index<<" "<<c_t-com[*index].p_t<<"  "<<userRC[*index][2]<<endl;
+    com[*index].p_t=c_t;*/
     com[*index].sendRequestMSP_GET_DEBUG(requests);
     //com.sendRequestMSP_SET_RAW_RC(userRC);
     //com.sendRequestMSP_GET_DEBUG(requests);
     usleep(22000);
+    /*struct timeval tp;
+    gettimeofday(&tp, NULL);
+                             com[*index].c_t=tp.tv_sec*1000000L+tp.tv_usec;
+                             cout<<*index<<"  "<<com[*index].c_t-com[*index].p_t<<endl;
+                             com[*index].p_t=com[*index].c_t;*/
   }
   pthread_exit(NULL);
 }
@@ -84,7 +95,7 @@ void *readFunction(void *arg)
   {
       com[*index].readFrame();
        //com.readFrame();
-    //usleep(5);
+    //usleep(140);
   }
   while(1);
   pthread_exit(NULL);
@@ -101,6 +112,7 @@ void *serviceFunction(void *arg)
       {
       
       //cout<<"service"<<*index;
+        /*
        userRC[*index][0]=service[*index].response.rcRoll;
        userRC[*index][1]=service[*index].response.rcPitch;
        userRC[*index][2]=service[*index].response.rcThrottle;
@@ -109,7 +121,7 @@ void *serviceFunction(void *arg)
        userRC[*index][5]=service[*index].response.rcAUX2;
        userRC[*index][6]=service[*index].response.rcAUX3;
        userRC[*index][7]=service[*index].response.rcAUX4;
-       
+       */
        //if(*index==1)
        //cout<<"alt:"<<com[*index].accX;
        service[*index].request.accX=com[*index].accX;
@@ -140,6 +152,7 @@ void *serviceFunction(void *arg)
        service.request.yaw=com.yaw;
        service.request.alt=com.alt;*/
       }
+      usleep(500);
   }
  pthread_exit(NULL);
 }
@@ -171,9 +184,9 @@ int main(int argc, char **argv)
     
     
    
-  //all_ips.push_back("192.168.4.1");
+    //all_ips.push_back("192.168.4.1");
     //all_ips.push_back("192.168.43.3");
-    ///all_ips.push_back("192.168.0.125");    // Node_0
+    all_ips.push_back("192.168.0.125");    // Node_0
     all_ips.push_back("192.168.0.183");    // Node_1
     all_ips.push_back("192.168.0.174");    //Node_2
     

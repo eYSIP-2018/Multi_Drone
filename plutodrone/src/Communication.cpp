@@ -673,11 +673,15 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-                              //cout<<"\nsockID:"<<sockID<<"  Yaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
+                             // cout<<"\nsockID:"<<sockID;//<<"  Yaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
                              // cout<<" Throttle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
                               //cout<<" AUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
                              //cout<<"time:"<<time(0);
-
+                             
+                             /*gettimeofday(&tp, NULL);
+                             c_t=tp.tv_sec*1000000L+tp.tv_usec;
+                             cout<<"  "<<c_t;
+                             p_t=c_t;*/
                              /*count++;
                              if (time(0)-saved_time)
                               count=0;
@@ -712,6 +716,10 @@ void Communication::sendRequestMSP(std::vector<int8_t> data)
 
 
 writeSock(&data[0],data.size());
+//gettimeofday(&tp, NULL);
+//c_t=tp.tv_sec*1000000L+tp.tv_usec;
+//cout<<c_t<<endl;
+
 
 
 

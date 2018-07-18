@@ -26,7 +26,7 @@ from pid_tune.msg import PidTune
 
 
 # Number of nodes (drones to control)
-NODES=1
+NODES=3
 
 # Vraibles to store the whycon positions of drones
 pos_x=[0.0 for i in range(NODES)]
@@ -34,8 +34,8 @@ pos_y=[0.0 for i in range(NODES)]
 pos_z=[0.0 for i in range(NODES)]
 
 # variables to store the previous values of drones 
-pos_px=[0.0,0.0,4.5]
-pos_py=[0.0,0.0,4.5]
+pos_px=[-3.0,0.0,3.5]
+pos_py=[-3.0,0.0,3.5]
 #pos_px=[-4.5,4.5,4.5]
 #pos_py=[0.0,-4.5,4.5]
 pos_pz=[0.0 for i in range(NODES)]
@@ -47,24 +47,28 @@ alt=[0.0 for i in range(NODES)]
 yaw=[0.0 for i in range(NODES)]
 g_z=[0.0 for i in range(NODES)]
 
+
+marker_time=[1 for i in range(NODES)]
+
 # fixed values 
 fix_yaw=[0.0 for i in range(NODES)]
-fix_x=[0.0,0.0,4.5]
-fix_y=[0.0,0.0,4.5]
-fix_alt=[18.0]*NODES
+fix_x=[-4.0,0.0,4.5]
+fix_y=[-4.0,0.0,4.5]
+fix_alt=[17.0,17.0,17.0]
 is_first_yaw=[True]*NODES
 
 # flag varible to start the drone pid
 exit_flag=False
 start_flag=True
 control_flag=True
+gyro_offset=20
 
 
 # variables to store the PID values of drones
-pid_pitch=[{'kp':12.0,'kd':610.0,'ki':4.0},{'kp':11.0,'kd':610.0,'ki':6.0},{'kp':18.0,'kd':610.0,'ki':6.0}]  # 8,240,15
-pid_roll=[{'kp':11.0,'kd':610.0,'ki':4.0},{'kp':11.0,'kd':610.0,'ki':6.0},{'kp':18.0,'kd':610.0,'ki':6.0}]
-pid_yaw=[{'kp':0.0,'kd':0.0,'ki':35.0},{'kp':10.0,'kd':3.0,'ki':0.0},{'kp':10.0,'kd':3.0,'ki':0.0}]
-pid_throttle=[{'kp':55.0,'kd':77.0,'ki':2.0},{'kp':50.0,'kd':77.0,'ki':2.0},{'kp':40.0,'kd':77.0,'ki':2.0}]
+pid_pitch=[{'kp':15.0,'kd':556.0,'ki':6.0},{'kp':15.0,'kd':550.0,'ki':7.0},{'kp':15.0,'kd':550.0,'ki':6.0}]  # 8,240,15
+pid_roll=[{'kp':16.0,'kd':556.0,'ki':6.0},{'kp':15.0,'kd':550.0,'ki':7.0},{'kp':15.0,'kd':550.0,'ki':6.0}]
+pid_yaw=[{'kp':0.0,'kd':0.0,'ki':35.0},{'kp':0.0,'kd':0.0,'ki':35.0},{'kp':0.0,'kd':0.0,'ki':35.0}]
+pid_throttle=[{'kp':55.0,'kd':77.0,'ki':2.0},{'kp':50.0,'kd':77.0,'ki':2.0},{'kp':44.0,'kd':77.0,'ki':2.0}]
 
 
 
@@ -111,7 +115,9 @@ class controlThread(threading.Thread):
       self.yaw=yaw
       self.throttle=throttle
       self.drone_control=rospy.Publisher(topic, PlutoMsg, queue_size=1)
-      self.drone_debug=rospy.Publisher("drone_debug", PlotData, queue_size=1)
+      self.drone_debug_0=rospy.Publisher("drone_debug_0", PlotData, queue_size=1)
+      self.drone_debug_1=rospy.Publisher("drone_debug_1", PlotData, queue_size=1)
+      self.drone_debug_2=rospy.Publisher("drone_debug_2", PlotData, queue_size=1)
       #self.call()
       
    
@@ -185,6 +191,14 @@ class controlThread(threading.Thread):
     rospy.sleep(1) 
    
    
+   def pub_debug(self,plot,node):
+     if node==0:
+       self.drone_debug_0.publish(plot)
+     elif node==1:
+       self.drone_debug_1.publish(plot)
+     elif node==2:
+       self.drone_debug_2.publish(plot)    
+
     
    '''
    * Function Name: run
@@ -196,7 +210,7 @@ class controlThread(threading.Thread):
    '''
 
    def run(self):
-    global pos_x,pos_y,pos_z,pitch,roll,g_z,yaw,alt,fix_yaw,fix_x,fix_y,fix_alt,start_flag,exit_flag,control_flag
+    global pos_x,pos_y,pos_z,pitch,roll,g_z,yaw,alt,fix_yaw,fix_x,fix_y,fix_alt,start_flag,exit_flag,control_flag,gyro_offset,marker_time
     
     maxpropx=60.0
     maxpropy=60.0
@@ -277,6 +291,9 @@ class controlThread(threading.Thread):
 
     rate=rospy.Rate(29)
     while(1):
+
+       #print("Time diff:"+str(self.node)+":"+str(time.time()-time_pre))
+       time_pre=time.time()
        # delay according to drone processing rate
        #rospy.sleep(0.040)
        
@@ -294,8 +311,9 @@ class controlThread(threading.Thread):
            
        ######## PID to control the YAW of the drone  #################
        #erroryaw=fix_yaw[self.node]-yaw[self.node]
+
        gyro_z=g_z[self.node]
-       if abs(gyro_z)<20:
+       if abs(gyro_z)<gyro_offset:
          gyro_z=0
 
        erroryaw=g_z[self.node]
@@ -319,12 +337,33 @@ class controlThread(threading.Thread):
        #errory=fix_y[self.node]-pos_y[self.node]
        errorx=fix_x[self.node]-pos_x[self.node]
        errory=fix_y[self.node]-pos_y[self.node]
-       diffx=prex-pos_x[self.node]
-       diffy=prey-pos_y[self.node]
+       if not(marker_time[self.node]==0):
+        diffx=(prex-pos_x[self.node])
+        diffy=(prey-pos_y[self.node])
+        #print(str(self.node)+" "+str(marker_time[self.node]))
+       
+
        if prex==0.0:
          diffx=0.0
          diffy=0.0
-  
+       
+
+       # limit for difference if marker is not detected for a time
+       if diffx>0.25:
+        diffx=0.25
+       elif diffx<-0.25:
+        diffx=-0.25
+       if diffy>0.25:
+        diffy=0.25
+       elif diffy<-0.25:
+        diffy=-0.25
+
+
+       if not(marker_time[self.node]==0):
+        diffx/=marker_time[self.node]
+        diffy/=marker_time[self.node]
+        #print(str(self.node)+" "+str(marker_time[self.node]))
+       marker_time[self.node]=0 
        
        # low pass filter to x
        diffx_filter[x_filter_i]=diffx
@@ -339,15 +378,7 @@ class controlThread(threading.Thread):
        
        
        
-       # limit for difference if marker is not detected for a time
-       if diffx>0.25:
-        diffx=0.25
-       elif diffx<-0.25:
-        diffx=-0.25
-       if diffy>0.25:
-        diffy=0.25
-       elif diffy<-0.25:
-        diffy=-0.25
+      
            
        #diffx=errorx-errorprex
        #diffy=errory-errorprey
@@ -458,24 +489,6 @@ class controlThread(threading.Thread):
      
        
        
-         
-       ### To maintain the throttle upper value as 2000
-       
-       
-       
-
-
-       '''
-       if speedz<0:
-         if speedz<-250:
-           speedz=-250
-         temp=1-abs(speedz)/250.0
-         pid_x=pid_x*temp
-         pid_y=pid_y*temp
-       
-       if not(th_flag):
-         pid_x=0.0
-         pid_y=0.0'''
 
        throttle=1500-speedz 
        #speedx=1500-pid_x
@@ -508,7 +521,7 @@ class controlThread(threading.Thread):
        #print("diffy:"+str(self.node)+": "+str(diffy))
        
        #print("Throttle"+str(self.node)+": "+str(throttle))
-       print("Yaw"+str(self.node)+": "+str(cmd.rcYaw))
+       #print("Yaw"+str(self.node)+": "+str(cmd.rcYaw))
        #print("Roll"+str(self.node)+": "+str(cmd.rcRoll))
        #print("Pitch"+str(self.node)+": "+str(cmd.rcPitch))
        
@@ -523,6 +536,7 @@ class controlThread(threading.Thread):
        while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
         line = sys.stdin.readline()
         if line=="e\n":         #to stop the node with disarming the drone if e is pressed followed by enter
+          print("Drone "+str(self.node)+str("exited..."))
           cmd.rcThrottle=1300
           self.drone_control.publish(cmd)
           rospy.sleep(0.7)
@@ -541,18 +555,22 @@ class controlThread(threading.Thread):
         self.drone_control.publish(cmd)
         
         # publishing errors for debugging
-        plot.error_x=errorx*20
-        plot.error_y=errory*20
+        plot.error_x=diffx*200
+        plot.error_y=diffy*200
         plot.error_z=errorz*10
         plot.added_pid_x=-pid_x
         plot.added_pid_y=-pid_y
         plot.added_pid_z=-speedz
-        self.drone_debug.publish(plot)
+        
+        diff_time=(time.time()-time_pre)*1000000
+        #print(str(self.node)+" "+str(diff_time))
+        #time_pre=time.time()
+        plot.time=diff_time
+        self.pub_debug(plot,self.node)
         rate.sleep()
         #rospy.sleep(0.033)
 
-        #print("Time diff:"+str(self.node)+":"+str(time.time()-time_pre))
-        #time_pre=time.time()
+        
 
 
 
@@ -570,8 +588,8 @@ class controlThread(threading.Thread):
 '''       
             
 def image_data(data):
-     global pos_x,pos_y,pos_z,pos_px,pos_py,pos_pz,NODES
-     
+     global pos_x,pos_y,pos_z,pos_px,pos_py,pos_pz,NODES,marker_time
+     #time_im=time.time()
      posear=data.poses
      length=len(posear)
      tmp_x=[0.0 for i in range(NODES)]
@@ -605,8 +623,9 @@ def image_data(data):
        #posp_x[sx_index]=x
        selected[s_index]=True
      
-     
-    
+     for i in range(NODES):
+       marker_time[i]+=1
+     #print((time.time()-time_im)*1000000)
      
      # assigning current val to pre val array
      #print("pos_px:"+str(pos_x))
@@ -721,14 +740,40 @@ def draw_circle(num,arc):
 
 
    elif num==1:
-     # drawing the circle which have both the drones on the arc of circle in exact opposite direction
-    fix_x[0]=-fix_x[1]
-    fix_y[0]=-fix_y[1]
-
-    time.sleep(10)
+    
     rad=3.14/180
-    x=10
-    for i in range(36):
+    x=[60,120,180,240,300,360]
+    for i in range(6):
+          while  not(abs(pos_x[1]-fix_x[1])<0.5 and abs(pos_y[1]-fix_y[1])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[0]-fix_y[0])<0.5  and abs(pos_x[2]-fix_x[2])<0.5 and abs(pos_y[2]-fix_y[2])<0.5):  
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+             line = sys.stdin.readline()
+             if line=="q\n":
+              print("circle exited...")
+              sys.exit()
+          fix_x[1]=arc*math.sin(rad*(90-x[i]))
+          fix_y[1]=arc*math.cos(rad*(90-x[i]))
+          fix_x[0]=arc*math.sin(rad*(90-x[(i+2)%6]))
+          fix_y[0]=arc*math.cos(rad*(90-x[(i+2)%6]))
+          fix_x[2]=arc*math.sin(rad*(90-x[(i+4)%6]))
+          fix_y[2]=arc*math.cos(rad*(90-x[(i+4)%6]))
+
+          print("x:"+str(fix_x[0]))
+          print("y:"+str(fix_y[0]))
+          print("x:"+str(fix_x[1]))
+          print("y:"+str(fix_y[1]))
+          print("x:"+str(fix_x[2]))
+          print("y:"+str(fix_y[2]))
+          print("")
+          rospy.sleep(3)
+   
+   elif num==2:
+      # drawing the circle which have both the drones on the arc of circle in exact opposite direction
+      fix_x[0]=-fix_x[1]
+      fix_y[0]=-fix_y[1]
+      time.sleep(10)
+      rad=3.14/180
+      x=10
+      for i in range(36):
           while  not(abs(pos_x[1]-fix_x[1])<0.5 and abs(pos_y[1]-fix_y[1])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[1]-fix_y[1])<0.5):
             while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
              line = sys.stdin.readline()
@@ -739,7 +784,10 @@ def draw_circle(num,arc):
           fix_x[0]=-fix_x[1]
           fix_y[0]=-fix_y[1]
           print("x:"+str(fix_x[1]))
-          print("y:"+str(fix_y[1]))      
+          print("y:"+str(fix_y[1]))
+
+
+
 
 
 '''
@@ -766,10 +814,11 @@ def draw_square(num,size):
         rad=3.14/180
         for i in range(5):
           while  not(abs(pos_x[2]-fix_x[2])<0.5 and abs(pos_y[2]-fix_y[2])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[0]-fix_y[0])<0.5):
-            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
+            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:       #Non-blocking input
              line = sys.stdin.readline()
              if line=="q\n":
-              sys.exit()
+              return
+            rospy.sleep(0.01)  
           fix_x[0]=ar_x[i%4]
           fix_y[0]=ar_y[i%4]
           fix_x[2]=-fix_x[0]
@@ -779,52 +828,11 @@ def draw_square(num,size):
           rospy.sleep(5)
 
 
-'''
-* Function Name: draw_triangle
-* Input:  triangle size
-* Output: Set target as points of triangle nodes
-* Logic:  Itrate to update the target point such that the drone pass through the nodes of a triangle
-*
-* Example Call: draw_square(size)
-'''
-
-def draw_triangle(size):
-     global fix_x,fix_y
-
-     ar_x=[-size,-size/2,size,size+size/2,size,0.0]
-     ar_y=[0.0,size/2,-size,0.0,size,size]
-     fix_x[0]=ar_x[0]
-     fix_y[0]=ar_y[0]
-
-     fix_x[1]=ar_x[1]
-     fix_y[1]=ar_y[1]
-
-     fix_x[2]=ar_x[2]
-     fix_y[2]=ar_y[2]
-     
-     for i in range(6):
-          while  not(abs(pos_x[2]-fix_x[2])<0.5 and abs(pos_y[2]-fix_y[2])<0.5 and abs(pos_x[0]-fix_x[0])<0.5 and abs(pos_y[0]-fix_y[0])<0.5 and abs(pos_x[1]-fix_x[1])<0.5 and abs(pos_y[1]-fix_y[1])<0.5):
-            while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:   #Non-blocking input
-             line = sys.stdin.readline()
-             if line=="q\n":
-              sys.exit()
-          fix_x[0]=ar_x[i%3]
-          fix_y[0]=ar_y[i%3]
-          fix_x[1]=ar_x[(i+1)%3]
-          fix_y[1]=ar_y[(i+1)%3]
-          fix_x[2]=ar_x[(i+2)%3]
-          fix_y[2]=ar_y[(i+2)%3]
-          print("x:"+str(fix_x[0]))
-          print("y:"+str(fix_y[0]))
-          if i%2==0:
-           rospy.sleep(5)
 
 
 
 if __name__ == '__main__':
     rospy.init_node('Multi_drone_control', anonymous=True)
-    #print("working")
-
 
     # thread to read data from the drone sensor and whycon
     data_th=dataThread()
@@ -832,12 +840,12 @@ if __name__ == '__main__':
 
     #### Making instance of thread and starting thread to control the drones  #####
     drone0=controlThread(0,pid_pitch[0],pid_roll[0],pid_yaw[0],pid_throttle[0],'/drone_command_0')
-    #drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
-    #drone2=controlThread(2,pid_pitch[2],pid_roll[2],pid_yaw[2],pid_throttle[2],'/drone_command_2')
+    drone1=controlThread(1,pid_pitch[1],pid_roll[1],pid_yaw[1],pid_throttle[1],'/drone_command_1')
+    drone2=controlThread(2,pid_pitch[2],pid_roll[2],pid_yaw[2],pid_throttle[2],'/drone_command_2')
     
     drone0.start()
-    #drone1.start()
-   # drone2.start()
+    drone1.start()
+    drone2.start()
     
     #draw_circle(0,5)
     while control_flag:
@@ -847,10 +855,13 @@ if __name__ == '__main__':
               start_flag=False
              elif line=="n\n":
               exit_flag=True
-              rospy.sleep(1)
+              print("exiting...")
+              rospy.sleep(3)
               sys.exit()
+      rospy.sleep(0.01)        
 
-    rospy.sleep(6)
+    rospy.sleep(10)
+    draw_circle(1,4.5)
     #draw_triangle(3.5)
     #draw_square(1,4.5)
 
