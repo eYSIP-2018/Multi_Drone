@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from plutodrone.srv import *
 import rospy
+import time
 from geometry_msgs.msg import PoseArray
 from plutoserver.msg import floatar
 from geometry_msgs.msg import Pose
@@ -14,6 +15,7 @@ class request_data(threading.Thread):
 	        print(service)
 	        self.drone_service=service
 	        self.drone_topic=topic
+	        self.time_pre=time.time()
 	def run(self):        
 		#rospy.init_node('drone_board_data')
 		data = rospy.Service(self.drone_service, PlutoPilot, self.access_data)
@@ -22,14 +24,20 @@ class request_data(threading.Thread):
 		rospy.spin()
 
 	def access_data(self, req):
+
 		 #print "accx = " + str(req.accX), "accy = " + str(req.accY), "accz = " + str(req.accZ)
-		 #print "gyrox = " + str(req.gyroX), "gyroy = " + str(req.gyroY), "gyroz = " + str(req.gyroZ)
+		 print "gyrox = " + str(req.gyroX), "gyroy = " + str(req.gyroY), "gyroz = " + str(req.gyroZ)
 		 print "magx = " + str(req.magX), "magy = " + str(req.magY), "magz = " + str(req.magZ)
-		 print self.drone_topic + ":"
+		 print self.drone_topic + ":"+str(time.time()-self.time_pre)+" "+str(time.time())
+		 self.time_pre=time.time()
+
 		 print "roll = " + str(req.roll), "pitch = " + str(req.pitch), "yaw = " + str(req.yaw)
 		 print "altitude = " +str(req.alt)
 		 print " "
 		 poses=floatar()
+		 poses.gx=req.gyroX
+		 poses.gy=req.gyroY
+		 poses.gz=req.gyroZ
 		 poses.pitch=req.accX
 		 poses.roll=req.accY
 		 poses.yaw=req.yaw
@@ -41,9 +49,11 @@ class request_data(threading.Thread):
 if __name__ == '__main__':
         rospy.init_node('drone_board_data')
         node_0 = request_data("PlutoService_0","/Sensor_data_0")
-        #node_1 = request_data("PlutoService_1","/Sensor_data_1")
+        node_1 = request_data("PlutoService_1","/Sensor_data_1")
+        node_2 = request_data("PlutoService_2","/Sensor_data_2")
         node_0.start()
-        #node_1.start()
+        node_1.start()
+        node_2.start()
         rospy.spin()
 
 

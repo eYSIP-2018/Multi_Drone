@@ -1,6 +1,6 @@
 <<<<<<< HEAD
 # pluto_drone
-Metapackage to control the plutodrone via service and topic
+Metapackage to control the plutodrone via ROS
 =======
 # Pluto_drone
 pluto drone packges to control single or multi drones under camera

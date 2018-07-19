@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <string>
+#include <time.h>
+//#include <sys/time.h>
 //#include <plutodrone/Protocol.h>
 
 
@@ -92,6 +94,12 @@ uint8_t recbuf[1024];
 
 
 //std::string MSP_HEADER="$M<";
+
+clock_t saved_time=time(0);
+int count=0;
+
+long int c_t,p_t=0;
+struct timeval tp;
 
 uint8_t checksum=0;
 

@@ -10,8 +10,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include <plutodrone/Communication.h>
+
+#include <time.h>
 //#include <plutodrone/Protocol.h>
-#include <stdlib.h>
+//#include <stdlib.h>
 
 
 #include <unistd.h>
@@ -507,7 +509,7 @@ int Communication::read16()
 
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff) ;
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++]) << 8);
 
       return add_1+add_2;
 
@@ -521,9 +523,9 @@ int Communication::read32()
 {
 
       int add_1=(Communication::inputBuffer[Communication::bufferIndex++] & 0xff);
-      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8);
-      int add_3=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16);
-      int add_4=((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);
+      int add_2=((Communication::inputBuffer[Communication::bufferIndex++] ) << 8);
+      int add_3=((Communication::inputBuffer[Communication::bufferIndex++] ) << 16);
+      int add_4=((Communication::inputBuffer[Communication::bufferIndex++] ) << 24);
   
   return add_1+add_2+add_3+add_4;
  /* return (Communication::inputBuffer[Communication::bufferIndex++] & 0xff) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 8)+ ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 16) + ((Communication::inputBuffer[Communication::bufferIndex++] & 0xff) << 24);*/
@@ -671,7 +673,22 @@ void Communication::evaluateCommand(int command)
 
                              //printf("rcAUX4 %i\n",rcAUX4);
 
-                              cout<<"Yaw:"<<rcYaw;
+                             // cout<<"\nsockID:"<<sockID;//<<"  Yaw:"<<rcYaw<<" Roll:"<<rcRoll<<" Pitch:"<<rcPitch;
+                             // cout<<" Throttle:"<<rcThrottle<<" AUX1:"<<rcAUX1<<" AUX2:"<<rcAUX2;
+                              //cout<<" AUX3:"<<rcAUX3<<" AUX4:"<<rcAUX4;
+                             //cout<<"time:"<<time(0);
+                             
+                             /*gettimeofday(&tp, NULL);
+                             c_t=tp.tv_sec*1000000L+tp.tv_usec;
+                             cout<<"  "<<c_t;
+                             p_t=c_t;*/
+                             /*count++;
+                             if (time(0)-saved_time)
+                              count=0;
+                             saved_time=time(0);
+                             cout<<" "<<count;*/
+
+
              break;
 
           default:
@@ -699,6 +716,10 @@ void Communication::sendRequestMSP(std::vector<int8_t> data)
 
 
 writeSock(&data[0],data.size());
+//gettimeofday(&tp, NULL);
+//c_t=tp.tv_sec*1000000L+tp.tv_usec;
+//cout<<c_t<<endl;
+
 
 
 
